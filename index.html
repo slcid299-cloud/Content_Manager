@@ -1,0 +1,2453 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TikTok Studio OS — Content Management Dashboard</title>
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            obsidian: '#0A0A0C',
+            surface: '#141418',
+            elevated: '#1B1B21',
+            borderSubtle: '#27272A',
+            tiktokCyan: '#25F4EE',
+            tiktokRose: '#FE2C55',
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* Custom subtle scrollbars and base styling */
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      background-color: #0A0A0C;
+      color: #FAFAFA;
+      font-family: 'Inter', system-ui, sans-serif;
+      overflow-x: hidden;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0A0A0C;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #27272A;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3F3F46;
+    }
+    /* Custom date/time input dark scheme */
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="time"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.8);
+      cursor: pointer;
+    }
+    /* Subtle glow utility */
+    .glow-cyan {
+      box-shadow: 0 0 20px -6px rgba(37, 244, 238, 0.35);
+    }
+    .glow-rose {
+      box-shadow: 0 0 20px -6px rgba(254, 44, 85, 0.4);
+    }
+    /* Smooth view transitions */
+    .view-panel {
+      animation: fadeIn 0.2s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-obsidian text-zinc-100 antialiased min-h-screen flex flex-col lg:flex-row selection:bg-tiktokCyan/20 selection:text-tiktokCyan">
+
+  <!-- ==================== MOBILE HEADER ==================== -->
+  <header class="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-surface/95 backdrop-blur border-b border-borderSubtle">
+    <div class="flex items-center gap-2.5">
+      <div class="w-8 h-8 rounded-lg bg-elevated border border-borderSubtle flex items-center justify-center relative overflow-hidden">
+        <span class="w-2.5 h-2.5 rounded-full bg-tiktokCyan absolute -top-0.5 -left-0.5 blur-[2px] opacity-80"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-tiktokRose absolute -bottom-0.5 -right-0.5 blur-[2px] opacity-80"></span>
+        <svg class="w-4 h-4 text-white relative z-10" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+        </svg>
+      </div>
+      <div>
+        <span class="font-semibold text-sm tracking-tight text-white">TikTok Studio OS</span>
+      </div>
+    </div>
+    <button id="mobileMenuBtn" class="p-2.5 rounded-lg bg-elevated border border-borderSubtle text-zinc-300 hover:text-white transition" aria-label="Open Navigation">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- Mobile Sidebar Overlay -->
+  <div id="mobileOverlay" class="fixed inset-0 bg-black/70 backdrop-blur-xs z-40 hidden lg:hidden"></div>
+
+  <!-- ==================== SIDEBAR NAVIGATION ==================== -->
+  <aside id="sidebar" class="fixed lg:sticky top-0 left-0 z-50 h-screen w-64 bg-surface border-r border-borderSubtle flex flex-col justify-between transform -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-out shrink-0">
+    <div class="p-5">
+      <!-- Brand Logo -->
+      <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-elevated border border-borderSubtle flex items-center justify-center relative overflow-hidden">
+            <span class="w-3 h-3 rounded-full bg-tiktokCyan absolute -top-1 -left-1 blur-[3px] opacity-80"></span>
+            <span class="w-3 h-3 rounded-full bg-tiktokRose absolute -bottom-1 -right-1 blur-[3px] opacity-80"></span>
+            <svg class="w-4 h-4 text-white relative z-10" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+            </svg>
+          </div>
+          <div>
+            <h1 class="font-semibold text-sm tracking-tight text-white leading-tight">TikTok Studio OS</h1>
+            <p class="text-[11px] text-zinc-500 font-medium">Creator Command Center</p>
+          </div>
+        </div>
+        <button id="closeMobileMenuBtn" class="lg:hidden p-1.5 rounded-lg text-zinc-400 hover:text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="space-y-1.5" aria-label="Main Navigation">
+        <p class="px-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-2">Workspace</p>
+
+        <button data-view="studio" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/>
+          </svg>
+          <span>Script Studio</span>
+        </button>
+
+        <button data-view="calendar" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/>
+          </svg>
+          <span>Publishing Calendar</span>
+        </button>
+
+        <button data-view="setup" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"/>
+          </svg>
+          <span>Vercel &amp; Claude Setup</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Sidebar Footer Stats & Mode Indicator -->
+    <div class="p-4 border-t border-borderSubtle space-y-3">
+      <div class="grid grid-cols-2 gap-2">
+        <div class="bg-elevated/80 border border-borderSubtle rounded-xl p-2.5">
+          <p class="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Scripts</p>
+          <p id="statScriptsCount" class="text-lg font-semibold text-white mt-0.5">0</p>
+        </div>
+        <div class="bg-elevated/80 border border-borderSubtle rounded-xl p-2.5">
+          <p class="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Scheduled</p>
+          <p id="statPostsCount" class="text-lg font-semibold text-tiktokCyan mt-0.5">0</p>
+        </div>
+      </div>
+
+      <div class="bg-elevated/60 border border-borderSubtle rounded-xl p-3 flex items-center justify-between">
+        <div class="flex items-center gap-2 min-w-0">
+          <span id="sidebarModeDot" class="w-2 h-2 rounded-full bg-tiktokCyan shrink-0"></span>
+          <span id="sidebarModeText" class="text-xs text-zinc-300 font-medium truncate">Demo Mode</span>
+        </div>
+        <span class="text-[10px] font-mono text-zinc-500 px-1.5 py-0.5 rounded bg-obsidian border border-borderSubtle">v1.0</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ==================== MAIN CONTENT AREA ==================== -->
+  <main class="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto w-full">
+
+    <!-- ==================== VIEW 1: SCRIPT STUDIO ==================== -->
+    <section id="view-studio" class="view-panel space-y-6">
+      <!-- Top Bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-white">Script Studio</h2>
+          <p class="text-sm text-zinc-400 mt-0.5">Generate high-retention TikTok scripts with Claude and push straight to your calendar.</p>
+        </div>
+        <div class="flex items-center gap-2.5 self-start sm:self-auto">
+          <div id="activeModeBadge" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-elevated border border-borderSubtle text-zinc-200">
+            <span class="w-2 h-2 rounded-full bg-tiktokCyan animate-pulse"></span>
+            <span>Demo Mode Active</span>
+          </div>
+          <button id="newScriptResetBtn" class="px-3 py-1.5 rounded-xl text-xs font-medium bg-elevated hover:bg-zinc-800 border border-borderSubtle text-zinc-300 hover:text-white transition">
+            + Blank Script
+          </button>
+        </div>
+      </div>
+
+      <!-- Studio 2-Column Workspace -->
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+
+        <!-- LEFT COLUMN: Generator Form (5 cols) -->
+        <div class="xl:col-span-5 bg-surface border border-borderSubtle rounded-2xl p-5 sm:p-6 space-y-5">
+          <div class="flex items-center justify-between border-b border-borderSubtle pb-4">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-tiktokRose"></span>
+              <h3 class="text-sm font-semibold text-white">Brief &amp; Parameters</h3>
+            </div>
+            <!-- Mode Toggle -->
+            <div class="inline-flex items-center bg-obsidian border border-borderSubtle rounded-lg p-0.5 text-[11px]">
+              <button type="button" data-mode="demo" class="mode-toggle-btn px-2.5 py-1 rounded-md font-medium transition">Demo Mode</button>
+              <button type="button" data-mode="live" class="mode-toggle-btn px-2.5 py-1 rounded-md font-medium transition">Live Claude API</button>
+            </div>
+          </div>
+
+          <form id="scriptGeneratorForm" class="space-y-4">
+            <!-- Video Topic -->
+            <div>
+              <label for="inputTopic" class="block text-xs font-medium text-zinc-300 mb-1.5">Video Topic / Title <span class="text-tiktokRose">*</span></label>
+              <input id="inputTopic" type="text" required placeholder="e.g., 3 lighting tricks that make iPhone videos look like cinema"
+                class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-tiktokCyan transition" />
+            </div>
+
+            <!-- Niche & Hook Style Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label for="inputNiche" class="block text-xs font-medium text-zinc-300 mb-1.5">Content Niche</label>
+                <select id="inputNiche" class="w-full px-3 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white focus:outline-none focus:border-tiktokCyan transition">
+                  <option value="Photography & BTS">Photography &amp; BTS</option>
+                  <option value="Lifestyle & Fashion">Lifestyle &amp; Fashion</option>
+                  <option value="Creative Agency">Creative Agency</option>
+                  <option value="Educational / Tips">Educational / Tips</option>
+                  <option value="Storytelling / Vlog">Storytelling / Vlog</option>
+                  <option value="Comedy / Trending">Comedy / Trending</option>
+                </select>
+              </div>
+              <div>
+                <label for="inputHookStyle" class="block text-xs font-medium text-zinc-300 mb-1.5">Hook Style</label>
+                <select id="inputHookStyle" class="w-full px-3 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white focus:outline-none focus:border-tiktokCyan transition">
+                  <option value="Curiosity Gap">Curiosity Gap</option>
+                  <option value="Bold Statement">Bold Statement</option>
+                  <option value="Visual Transition">Visual Transition</option>
+                  <option value="Storytime">Storytime</option>
+                  <option value="Relatable Problem">Relatable Problem</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Target Duration -->
+            <div>
+              <label class="block text-xs font-medium text-zinc-300 mb-1.5">Target Duration</label>
+              <div class="grid grid-cols-4 gap-2" id="durationSelector">
+                <button type="button" data-duration="15s" class="duration-btn py-2 rounded-xl text-xs font-medium border border-borderSubtle bg-obsidian text-zinc-400 hover:text-white transition">15s</button>
+                <button type="button" data-duration="30s" class="duration-btn py-2 rounded-xl text-xs font-medium border border-tiktokCyan bg-tiktokCyan/10 text-tiktokCyan transition">30s</button>
+                <button type="button" data-duration="60s" class="duration-btn py-2 rounded-xl text-xs font-medium border border-borderSubtle bg-obsidian text-zinc-400 hover:text-white transition">60s</button>
+                <button type="button" data-duration="90s+" class="duration-btn py-2 rounded-xl text-xs font-medium border border-borderSubtle bg-obsidian text-zinc-400 hover:text-white transition">90s+</button>
+              </div>
+            </div>
+
+            <!-- Tone -->
+            <div>
+              <label for="inputTone" class="block text-xs font-medium text-zinc-300 mb-1.5">Tone &amp; Delivery</label>
+              <select id="inputTone" class="w-full px-3 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white focus:outline-none focus:border-tiktokCyan transition">
+                <option value="Cinematic & Aesthetic">Cinematic &amp; Aesthetic</option>
+                <option value="Energetic & Fast-Paced">Energetic &amp; Fast-Paced</option>
+                <option value="Casual & Conversational">Casual &amp; Conversational</option>
+                <option value="Educational & Sharp">Educational &amp; Sharp</option>
+              </select>
+            </div>
+
+            <!-- Basic Details / Key Points -->
+            <div>
+              <label for="inputDetails" class="block text-xs font-medium text-zinc-300 mb-1.5">Basic Details &amp; Key Points</label>
+              <textarea id="inputDetails" rows="4" placeholder="Drop your raw thoughts, gear used, story beats, product names, or specific CTA you want included..."
+                class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-tiktokCyan transition resize-y"></textarea>
+            </div>
+
+            <!-- Fallback Banner (Hidden unless Live API fails) -->
+            <div id="liveApiErrorBanner" class="hidden rounded-xl bg-tiktokRose/10 border border-tiktokRose/30 p-3.5 text-xs text-zinc-200 space-y-2">
+              <div class="flex items-start gap-2">
+                <svg class="w-4 h-4 text-tiktokRose shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+                </svg>
+                <div>
+                  <p class="font-semibold text-white">Live Claude API unreachable</p>
+                  <p id="liveApiErrorMsg" class="text-zinc-400 mt-0.5">Could not reach <span class="font-mono text-zinc-300">/api/generate-script</span>. Deploy to Vercel with your ANTHROPIC_API_KEY or preview instantly in Demo Mode.</p>
+                </div>
+              </div>
+              <button type="button" id="fallbackToDemoBtn" class="w-full py-2 rounded-lg bg-tiktokCyan/15 hover:bg-tiktokCyan/25 border border-tiktokCyan/40 text-tiktokCyan font-medium transition">
+                Switch &amp; Generate in Demo Mode
+              </button>
+            </div>
+
+            <!-- Submit CTA -->
+            <button type="submit" id="generateScriptBtn" class="w-full py-3 px-4 rounded-xl bg-tiktokRose hover:bg-[#e52349] text-white font-semibold text-sm flex items-center justify-center gap-2 transition glow-rose cursor-pointer">
+              <svg id="generateIcon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+              </svg>
+              <svg id="generateSpinner" class="w-4 h-4 animate-spin hidden" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+              <span id="generateBtnText">Generate Script with Claude</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- RIGHT COLUMN: Editable Script Output Workspace (7 cols) -->
+        <div class="xl:col-span-7 bg-surface border border-borderSubtle rounded-2xl p-5 sm:p-6 flex flex-col space-y-4">
+          <!-- Editor Top Metadata -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-borderSubtle pb-4">
+            <div class="flex-1 min-w-0">
+              <input id="editorScriptTitle" type="text" placeholder="Untitled TikTok Script..."
+                class="w-full bg-transparent text-base sm:text-lg font-semibold text-white placeholder-zinc-600 focus:outline-none truncate" />
+              <div class="flex flex-wrap items-center gap-2 mt-1 text-xs text-zinc-500">
+                <span id="editorMetaNiche" class="px-2 py-0.5 rounded-md bg-elevated border border-borderSubtle text-zinc-300">Photography &amp; BTS</span>
+                <span id="editorMetaDuration" class="font-mono text-zinc-400">30s</span>
+                <span>•</span>
+                <span id="editorWordCount" class="font-mono text-zinc-400">0 words (~0s read)</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <select id="editorScriptStatus" class="px-3 py-1.5 rounded-xl bg-obsidian border border-borderSubtle text-xs font-medium text-zinc-200 focus:outline-none focus:border-tiktokCyan">
+                <option value="Draft">Draft</option>
+                <option value="Ready to Film">Ready to Film</option>
+                <option value="Filmed">Filmed</option>
+                <option value="Scheduled">Scheduled</option>
+                <option value="Posted">Posted</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Editable Script Textarea -->
+          <div class="relative flex-1">
+            <textarea id="scriptOutputEditor" rows="17" placeholder="Your structured Claude TikTok script will appear here...&#10;&#10;Includes:&#10;• 0–3s Hook (Visual cue + Spoken line + On-screen text)&#10;• Timestamped Body Beats &amp; B-roll cues&#10;• Call to Action (CTA)&#10;• Caption &amp; Trending Hashtags&#10;• Audio / Pacing Note"
+              class="w-full h-full min-h-[380px] p-4 rounded-xl bg-obsidian border border-borderSubtle text-sm leading-relaxed text-zinc-200 font-mono placeholder-zinc-600 focus:outline-none focus:border-tiktokCyan/70 transition resize-y"></textarea>
+          </div>
+
+          <!-- Action Buttons Row -->
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <button id="copyScriptBtn" type="button" class="px-3.5 py-2 rounded-xl bg-elevated hover:bg-zinc-800 border border-borderSubtle text-xs font-medium text-zinc-200 flex items-center gap-1.5 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+                <span>Copy Script</span>
+              </button>
+              <button id="saveScriptBtn" type="button" class="px-3.5 py-2 rounded-xl bg-elevated hover:bg-zinc-800 border border-borderSubtle text-xs font-medium text-white flex items-center gap-1.5 transition">
+                <svg class="w-3.5 h-3.5 text-tiktokCyan" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V7l-4-4z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17 21v-8H7v8M7 3v5h8"/>
+                </svg>
+                <span id="saveScriptBtnText">Save to Library</span>
+              </button>
+            </div>
+
+            <button id="scheduleFromEditorBtn" type="button" class="px-4 py-2 rounded-xl bg-tiktokCyan/15 hover:bg-tiktokCyan/25 border border-tiktokCyan/40 text-tiktokCyan text-xs font-semibold flex items-center gap-1.5 transition glow-cyan">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5"/>
+              </svg>
+              <span>Schedule to Calendar (AI Slot)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SAVED SCRIPTS LIBRARY -->
+      <div class="bg-surface border border-borderSubtle rounded-2xl p-5 sm:p-6 space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-semibold text-white">Saved Scripts Library</h3>
+            <p class="text-xs text-zinc-400">Click any script to load it back into the editor or schedule it.</p>
+          </div>
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <div class="relative">
+              <svg class="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+              </svg>
+              <input id="librarySearchInput" type="text" placeholder="Search scripts..."
+                class="w-full sm:w-56 pl-9 pr-3 py-2 rounded-xl bg-obsidian border border-borderSubtle text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-tiktokCyan" />
+            </div>
+            <select id="libraryStatusFilter" class="px-3 py-2 rounded-xl bg-obsidian border border-borderSubtle text-xs text-zinc-300 focus:outline-none focus:border-tiktokCyan">
+              <option value="ALL">All Statuses</option>
+              <option value="Draft">Draft</option>
+              <option value="Ready to Film">Ready to Film</option>
+              <option value="Filmed">Filmed</option>
+              <option value="Scheduled">Scheduled</option>
+              <option value="Posted">Posted</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="scriptsLibraryGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 2: PUBLISHING CALENDAR ==================== -->
+    <section id="view-calendar" class="view-panel hidden space-y-6">
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-white">Publishing Calendar</h2>
+          <p class="text-sm text-zinc-400 mt-0.5">Analyze niche engagement windows and schedule posts at peak velocity times.</p>
+        </div>
+        <button id="openNewPostModalBtn" class="self-start sm:self-auto px-4 py-2.5 rounded-xl bg-tiktokRose hover:bg-[#e52349] text-white text-xs font-semibold flex items-center gap-2 transition glow-rose">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+          </svg>
+          <span>Schedule Post</span>
+        </button>
+      </div>
+
+      <!-- TREND ANALYZER PANEL -->
+      <div class="bg-surface border border-borderSubtle rounded-2xl p-5 space-y-5">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="flex items-start gap-3">
+            <div class="w-9 h-9 rounded-xl bg-tiktokCyan/10 border border-tiktokCyan/30 flex items-center justify-center shrink-0">
+              <svg class="w-5 h-5 text-tiktokCyan" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-white">Trend-Based Slot Recommender</h3>
+              <p class="text-xs text-zinc-400 mt-0.5">Cross-references niche peak hours against your existing calendar to avoid double-booking.</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5">
+            <select id="trendNicheSelect" class="px-3 py-2 rounded-xl bg-obsidian border border-borderSubtle text-xs font-medium text-white focus:outline-none focus:border-tiktokCyan">
+              <option value="Photography & BTS">Photography &amp; BTS</option>
+              <option value="Lifestyle & Fashion">Lifestyle &amp; Fashion</option>
+              <option value="Creative Agency">Creative Agency</option>
+              <option value="Educational / Tips">Educational / Tips</option>
+              <option value="Storytelling / Vlog">Storytelling / Vlog</option>
+              <option value="Comedy / Trending">Comedy / Trending</option>
+            </select>
+
+            <select id="trendTimezoneSelect" class="px-3 py-2 rounded-xl bg-obsidian border border-borderSubtle text-xs font-medium text-zinc-300 focus:outline-none focus:border-tiktokCyan">
+              <option value="LOCAL">Local Browser Timezone</option>
+              <option value="Asia/Colombo">Asia/Colombo (+05:30)</option>
+              <option value="America/New_York">New York (EST/EDT)</option>
+              <option value="America/Los_Angeles">Los Angeles (PST/PDT)</option>
+              <option value="Europe/London">London (GMT/BST)</option>
+              <option value="UTC">UTC (+00:00)</option>
+            </select>
+
+            <button id="suggestBestSlotBtn" class="px-4 py-2 rounded-xl bg-tiktokCyan/15 hover:bg-tiktokCyan/25 border border-tiktokCyan/40 text-tiktokCyan text-xs font-semibold flex items-center gap-1.5 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>
+              </svg>
+              <span>Suggest Best Slot</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Top 3 Recommended Slots Grid -->
+        <div id="recommendedSlotsGrid" class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- CALENDAR GRID + HEATMAP/QUEUE SIDEBAR -->
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+
+        <!-- Interactive Monthly Calendar (8 cols) -->
+        <div class="xl:col-span-8 bg-surface border border-borderSubtle rounded-2xl p-4 sm:p-5 space-y-4">
+          <!-- Calendar Controls -->
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <h3 id="calendarMonthLabel" class="text-base sm:text-lg font-semibold text-white tracking-tight">November 2026</h3>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button id="calPrevBtn" class="p-2 rounded-xl bg-obsidian hover:bg-elevated border border-borderSubtle text-zinc-300 hover:text-white transition" aria-label="Previous Month">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/>
+                </svg>
+              </button>
+              <button id="calTodayBtn" class="px-3 py-1.5 rounded-xl bg-obsidian hover:bg-elevated border border-borderSubtle text-xs font-medium text-zinc-300 hover:text-white transition">
+                Today
+              </button>
+              <button id="calNextBtn" class="p-2 rounded-xl bg-obsidian hover:bg-elevated border border-borderSubtle text-zinc-300 hover:text-white transition" aria-label="Next Month">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Weekday Headers -->
+          <div class="grid grid-cols-7 gap-1 sm:gap-2 text-center">
+            <div class="text-[11px] font-semibold text-zinc-500 uppercase py-1">Mon</div>
+            <div class="text-[11px] font-semibold text-zinc-500 uppercase py-1">Tue</div>
+            <div class="text-[11px] font-semibold text-zinc-500 uppercase py-1">Wed</div>
+            <div class="text-[11px] font-semibold text-zinc-500 uppercase py-1">Thu</div>
+            <div class="text-[11px] font-semibold text-zinc-500 uppercase py-1">Fri</div>
+            <div class="text-[11px] font-semibold text-zinc-500 uppercase py-1">Sat</div>
+            <div class="text-[11px] font-semibold text-zinc-500 uppercase py-1">Sun</div>
+          </div>
+
+          <!-- Calendar Days Grid -->
+          <div id="calendarGrid" class="grid grid-cols-7 gap-1 sm:gap-2">
+            <!-- Dynamically populated -->
+          </div>
+
+          <!-- Legend -->
+          <div class="flex flex-wrap items-center gap-4 pt-2 border-t border-borderSubtle text-[11px] text-zinc-400">
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-zinc-400"></span> Idea / Scripted</span>
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Filmed / Edited</span>
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-tiktokCyan"></span> Scheduled</span>
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Posted</span>
+          </div>
+        </div>
+
+        <!-- Right Panel: Heatmap + Upcoming Queue (4 cols) -->
+        <div class="xl:col-span-4 space-y-6">
+          <!-- Weekly Trend Heatmap -->
+          <div class="bg-surface border border-borderSubtle rounded-2xl p-5 space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-semibold text-white">Weekly Trend Heatmap</h3>
+                <p id="heatmapNicheLabel" class="text-[11px] text-zinc-400 mt-0.5">Peak engagement for Photography &amp; BTS</p>
+              </div>
+              <div class="flex items-center gap-1 text-[10px] text-zinc-500">
+                <span>Low</span>
+                <span class="w-2.5 h-2.5 rounded bg-elevated border border-borderSubtle"></span>
+                <span class="w-2.5 h-2.5 rounded bg-tiktokCyan/30"></span>
+                <span class="w-2.5 h-2.5 rounded bg-tiktokCyan/65"></span>
+                <span class="w-2.5 h-2.5 rounded bg-tiktokCyan"></span>
+                <span>Peak</span>
+              </div>
+            </div>
+
+            <div id="trendHeatmapContainer" class="space-y-1.5">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+
+          <!-- Upcoming Queue -->
+          <div class="bg-surface border border-borderSubtle rounded-2xl p-5 space-y-3.5">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-semibold text-white">Upcoming Queue</h3>
+              <span id="upcomingQueueCount" class="text-[11px] font-mono text-zinc-400 bg-obsidian px-2 py-0.5 rounded-md border border-borderSubtle">0 posts</span>
+            </div>
+            <div id="upcomingQueueList" class="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 3: VERCEL & CLAUDE SETUP ==================== -->
+    <section id="view-setup" class="view-panel hidden space-y-6">
+      <div>
+        <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-white">Vercel &amp; Claude API Setup</h2>
+        <p class="text-sm text-zinc-400 mt-0.5">Connect your GitHub + Vercel deployment to Anthropic's Claude API securely using a serverless function.</p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Endpoint Configuration & Connection Test -->
+        <div class="lg:col-span-5 space-y-6">
+          <div class="bg-surface border border-borderSubtle rounded-2xl p-5 space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-semibold text-white">API Endpoint Configuration</h3>
+              <span id="setupStatusPill" class="px-2.5 py-1 rounded-full text-[11px] font-medium bg-elevated border border-borderSubtle text-zinc-400">Not Tested</span>
+            </div>
+
+            <div>
+              <label for="setupEndpointInput" class="block text-xs font-medium text-zinc-300 mb-1.5">Serverless Function Route</label>
+              <input id="setupEndpointInput" type="text" value="/api/generate-script"
+                class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm font-mono text-white focus:outline-none focus:border-tiktokCyan" />
+              <p class="text-[11px] text-zinc-500 mt-1.5">Relative path on Vercel (e.g. <span class="font-mono text-zinc-400">/api/generate-script</span>) or full HTTPS URL.</p>
+            </div>
+
+            <div class="flex items-center gap-2.5">
+              <button id="saveEndpointBtn" class="px-4 py-2 rounded-xl bg-elevated hover:bg-zinc-800 border border-borderSubtle text-xs font-medium text-white transition">
+                Save Endpoint
+              </button>
+              <button id="testConnectionBtn" class="flex-1 px-4 py-2 rounded-xl bg-tiktokCyan/15 hover:bg-tiktokCyan/25 border border-tiktokCyan/40 text-tiktokCyan text-xs font-semibold flex items-center justify-center gap-2 transition">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z"/>
+                </svg>
+                <span>Test Connection</span>
+              </button>
+            </div>
+
+            <div id="connectionTestResult" class="hidden rounded-xl p-3.5 text-xs border"></div>
+          </div>
+
+          <!-- Deployment Checklist -->
+          <div class="bg-surface border border-borderSubtle rounded-2xl p-5 space-y-4">
+            <h3 class="text-sm font-semibold text-white">GitHub → Vercel Quick Checklist</h3>
+            <ol class="space-y-3 text-xs text-zinc-300">
+              <li class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-elevated border border-borderSubtle text-tiktokCyan font-mono text-[11px] flex items-center justify-center shrink-0 mt-0.5">1</span>
+                <span>Add <code class="font-mono text-white bg-obsidian px-1.5 py-0.5 rounded border border-borderSubtle">index.html</code> to the root of your GitHub repository.</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-elevated border border-borderSubtle text-tiktokCyan font-mono text-[11px] flex items-center justify-center shrink-0 mt-0.5">2</span>
+                <span>Create <code class="font-mono text-white bg-obsidian px-1.5 py-0.5 rounded border border-borderSubtle">api/generate-script.js</code> using the serverless snippet on the right.</span>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-elevated border border-borderSubtle text-tiktokCyan font-mono text-[11px] flex items-center justify-center shrink-0 mt-0.5">3</span>
+                <div>
+                  <span>In Vercel Dashboard → <strong>Settings → Environment Variables</strong>, add:</span>
+                  <div class="mt-2 flex items-center justify-between bg-obsidian border border-borderSubtle rounded-lg px-3 py-2 font-mono text-[11px]">
+                    <span class="text-tiktokRose">ANTHROPIC_API_KEY</span>
+                    <button type="button" id="copyEnvVarBtn" class="text-zinc-400 hover:text-white transition">Copy</button>
+                  </div>
+                </div>
+              </li>
+              <li class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-elevated border border-borderSubtle text-tiktokCyan font-mono text-[11px] flex items-center justify-center shrink-0 mt-0.5">4</span>
+                <span>Push to GitHub — Vercel auto-deploys both your frontend and <code class="font-mono text-white">/api/generate-script</code>. Switch Script Studio to <strong>Live Claude API</strong> mode.</span>
+              </li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Serverless Function Snippet -->
+        <div class="lg:col-span-7 bg-surface border border-borderSubtle rounded-2xl p-5 flex flex-col space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-semibold text-white font-mono">api/generate-script.js</h3>
+              <p class="text-[11px] text-zinc-400 mt-0.5">Zero-dependency Vercel Node serverless function calling Anthropic Messages API.</p>
+            </div>
+            <button id="copyServerlessCodeBtn" class="px-3 py-1.5 rounded-xl bg-elevated hover:bg-zinc-800 border border-borderSubtle text-xs font-medium text-zinc-200 flex items-center gap-1.5 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+              <span>Copy Snippet</span>
+            </button>
+          </div>
+
+          <pre id="serverlessCodeSnippet" class="flex-1 p-4 rounded-xl bg-obsidian border border-borderSubtle text-xs font-mono text-zinc-300 overflow-x-auto leading-relaxed"><code>// api/generate-script.js (Vercel Serverless Function)
+export default async function handler(req, res) {
+  if (req.method === 'GET') {
+    return res.status(200).json({ ok: true, service: 'TikTok Studio OS Claude API' });
+  }
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'Missing ANTHROPIC_API_KEY in Vercel env.' });
+  }
+
+  try {
+    const { topic, niche, details, duration, hookStyle, tone } = req.body || {};
+
+    const prompt = `You are an elite TikTok creative director. Write a high-retention TikTok script.
+Topic: ${topic}
+Niche: ${niche}
+Target Duration: ${duration}
+Hook Style: ${hookStyle}
+Tone: ${tone}
+Key Details: ${details || 'Use creative discretion'}
+
+Format strictly with these sections:
+1. 0–3s HOOK (Visual cue, Spoken line, On-screen text)
+2. BODY / MAIN BEATS (Timestamped scenes with camera/B-roll directions & dialogue)
+3. CALL TO ACTION (CTA)
+4. CAPTION & TRENDING HASHTAGS
+5. AUDIO / PACING NOTE`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-5-sonnet-latest',
+        max_tokens: 1200,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      return res.status(response.status).json({ error: data.error?.message || 'Claude API error' });
+    }
+
+    const script = data.content?.[0]?.text || '';
+    return res.status(200).json({ script });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+}</code></pre>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== SCHEDULE / EDIT POST MODAL ==================== -->
+  <div id="postModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
+    <div class="bg-surface border border-borderSubtle rounded-2xl w-full max-w-lg p-5 sm:p-6 space-y-5 shadow-2xl max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-borderSubtle pb-3.5">
+        <div>
+          <h3 id="postModalTitle" class="text-base font-semibold text-white">Schedule TikTok Post</h3>
+          <p class="text-xs text-zinc-400 mt-0.5">Assign a script, pick a trend-optimized time, and track production status.</p>
+        </div>
+        <button id="closePostModalBtn" class="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-elevated transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <form id="postModalForm" class="space-y-4">
+        <input type="hidden" id="modalPostId" />
+
+        <!-- Link Saved Script -->
+        <div>
+          <label for="modalScriptSelect" class="block text-xs font-medium text-zinc-300 mb-1.5">Link Saved Script (Optional)</label>
+          <select id="modalScriptSelect" class="w-full px-3 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white focus:outline-none focus:border-tiktokCyan">
+            <option value="">— Create standalone post —</option>
+          </select>
+        </div>
+
+        <!-- Post Title -->
+        <div>
+          <label for="modalPostTitle" class="block text-xs font-medium text-zinc-300 mb-1.5">Post Title <span class="text-tiktokRose">*</span></label>
+          <input id="modalPostTitle" type="text" required placeholder="e.g., Sunset BTS Color Grading Breakdown"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-tiktokCyan" />
+        </div>
+
+        <!-- Niche & Status -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label for="modalPostNiche" class="block text-xs font-medium text-zinc-300 mb-1.5">Niche</label>
+            <select id="modalPostNiche" class="w-full px-3 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white focus:outline-none focus:border-tiktokCyan">
+              <option value="Photography & BTS">Photography &amp; BTS</option>
+              <option value="Lifestyle & Fashion">Lifestyle &amp; Fashion</option>
+              <option value="Creative Agency">Creative Agency</option>
+              <option value="Educational / Tips">Educational / Tips</option>
+              <option value="Storytelling / Vlog">Storytelling / Vlog</option>
+              <option value="Comedy / Trending">Comedy / Trending</option>
+            </select>
+          </div>
+          <div>
+            <label for="modalPostStatus" class="block text-xs font-medium text-zinc-300 mb-1.5">Status</label>
+            <select id="modalPostStatus" class="w-full px-3 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white focus:outline-none focus:border-tiktokCyan">
+              <option value="Idea">Idea</option>
+              <option value="Scripted">Scripted</option>
+              <option value="Filmed">Filmed</option>
+              <option value="Edited">Edited</option>
+              <option value="Scheduled" selected>Scheduled</option>
+              <option value="Posted">Posted</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Date & Time + Auto-Pick Button -->
+        <div class="space-y-2">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label for="modalPostDate" class="block text-xs font-medium text-zinc-300 mb-1.5">Publish Date <span class="text-tiktokRose">*</span></label>
+              <input id="modalPostDate" type="date" required
+                class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white focus:outline-none focus:border-tiktokCyan" />
+            </div>
+            <div>
+              <label for="modalPostTime" class="block text-xs font-medium text-zinc-300 mb-1.5">Publish Time <span class="text-tiktokRose">*</span></label>
+              <input id="modalPostTime" type="time" required
+                class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white focus:outline-none focus:border-tiktokCyan" />
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between gap-2 pt-1">
+            <button type="button" id="autoPickDayTimeBtn" class="text-xs font-medium text-tiktokCyan hover:underline flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>
+              </svg>
+              <span>Auto-pick best time for this day</span>
+            </button>
+            <span id="modalTrendScoreBadge" class="hidden text-[11px] font-mono px-2 py-0.5 rounded-md bg-tiktokCyan/15 text-tiktokCyan border border-tiktokCyan/30"></span>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div>
+          <label for="modalPostNotes" class="block text-xs font-medium text-zinc-300 mb-1.5">Production / Audio Notes</label>
+          <textarea id="modalPostNotes" rows="2" placeholder="Trending audio link, props needed, cover frame text..."
+            class="w-full px-3.5 py-2 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-tiktokCyan resize-none"></textarea>
+        </div>
+
+        <!-- Footer Buttons -->
+        <div class="flex items-center justify-between pt-2 border-t border-borderSubtle">
+          <button type="button" id="deletePostModalBtn" class="hidden px-3.5 py-2 rounded-xl bg-tiktokRose/10 hover:bg-tiktokRose/20 border border-tiktokRose/30 text-tiktokRose text-xs font-medium transition">
+            Delete Post
+          </button>
+          <div class="flex items-center gap-2 ml-auto">
+            <button type="button" id="cancelPostModalBtn" class="px-4 py-2 rounded-xl bg-elevated hover:bg-zinc-800 border border-borderSubtle text-xs font-medium text-zinc-300 transition">
+              Cancel
+            </button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-tiktokRose hover:bg-[#e52349] text-white text-xs font-semibold transition">
+              Save Schedule
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== CUSTOM CONFIRMATION MODAL ==================== -->
+  <div id="confirmModal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
+    <div class="bg-surface border border-borderSubtle rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
+      <div class="space-y-1.5">
+        <h3 id="confirmModalTitle" class="text-base font-semibold text-white">Confirm Action</h3>
+        <p id="confirmModalMsg" class="text-xs text-zinc-400 leading-relaxed">Are you sure you want to proceed?</p>
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button id="confirmCancelBtn" class="px-3.5 py-2 rounded-xl bg-elevated hover:bg-zinc-800 border border-borderSubtle text-xs font-medium text-zinc-300 transition">Cancel</button>
+        <button id="confirmProceedBtn" class="px-4 py-2 rounded-xl bg-tiktokRose hover:bg-[#e52349] text-white text-xs font-semibold transition">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TOAST NOTIFICATION CONTAINER ==================== -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-[70] flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- ==================== APPLICATION JAVASCRIPT ==================== -->
+  <script>
+    (function () {
+      'use strict';
+
+      // =========================================================================
+      // 1. STORAGE KEYS & STATE
+      // =========================================================================
+      const STORAGE_KEYS = {
+        SCRIPTS: 'tiktok_studio_os_scripts_v1',
+        POSTS: 'tiktok_studio_os_posts_v1',
+        CONFIG: 'tiktok_studio_os_config_v1',
+      };
+
+      const state = {
+        activeView: 'studio',
+        scripts: [],
+        posts: [],
+        config: {
+          mode: 'demo', // 'demo' | 'live'
+          apiEndpoint: '/api/generate-script',
+          timezone: 'LOCAL',
+          trendNiche: 'Photography & BTS',
+        },
+        // Studio editor state
+        editingScriptId: null,
+        selectedDuration: '30s',
+        // Calendar state
+        calendarDate: new Date(),
+        // Confirmation callback
+        pendingConfirmAction: null,
+      };
+
+      // =========================================================================
+      // 2. TREND ENGINE DATA (Niche-specific engagement matrices)
+      // Days: 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
+      // Slots: Morning (08:30), Midday (12:30), Evening (19:00), Late Night (21:30)
+      // =========================================================================
+      const TREND_PROFILES = {
+        'Photography & BTS': {
+          // Peaks Wed, Fri, Sat evenings & midday
+          matrix: [
+            [42, 65, 78, 55], // Mon
+            [45, 70, 82, 60], // Tue
+            [50, 78, 95, 72], // Wed
+            [48, 74, 86, 65], // Thu
+            [55, 84, 96, 78], // Fri
+            [62, 88, 94, 80], // Sat
+            [58, 76, 89, 68], // Sun
+          ],
+          peakTimes: { 0: '08:30', 1: '12:30', 2: '19:15', 3: '21:30' },
+          reason: 'Visual creators & gear enthusiasts scroll heavily during mid-week & weekend golden-hour/evening breaks.',
+        },
+        'Lifestyle & Fashion': {
+          // Peaks Tue, Thu, Sun evenings
+          matrix: [
+            [48, 66, 80, 62],
+            [54, 74, 96, 76],
+            [50, 70, 84, 68],
+            [55, 78, 97, 79],
+            [52, 72, 85, 74],
+            [64, 82, 88, 75],
+            [68, 86, 95, 72],
+          ],
+          peakTimes: { 0: '09:00', 1: '13:00', 2: '19:30', 3: '21:45' },
+          reason: 'Outfit inspo & lifestyle routines see highest saves and shares on Tue/Thu/Sun evenings.',
+        },
+        'Creative Agency': {
+          // Peaks Tue, Wed, Thu midday & Fri afternoon/evening
+          matrix: [
+            [62, 84, 72, 42],
+            [68, 95, 86, 48],
+            [66, 96, 88, 50],
+            [64, 94, 85, 48],
+            [60, 88, 78, 45],
+            [42, 60, 65, 40],
+            [45, 62, 74, 52],
+          ],
+          peakTimes: { 0: '09:00', 1: '12:15', 2: '18:00', 3: '21:00' },
+          reason: 'Founders, marketers & brand managers actively browse during weekday lunch and post-work wind-downs.',
+        },
+        'Educational / Tips': {
+          // Peaks Tue, Wed, Thu midday & evening
+          matrix: [
+            [58, 80, 82, 55],
+            [65, 92, 95, 64],
+            [64, 94, 96, 66],
+            [62, 91, 94, 62],
+            [55, 82, 78, 52],
+            [48, 72, 74, 50],
+            [54, 78, 86, 60],
+          ],
+          peakTimes: { 0: '08:15', 1: '12:30', 2: '18:45', 3: '21:15' },
+          reason: 'High-intent learners bookmark tutorials during lunch breaks and early evening study sessions.',
+        },
+        'Storytelling / Vlog': {
+          // Peaks Thu, Fri, Sun evenings & late night
+          matrix: [
+            [40, 58, 78, 74],
+            [44, 62, 82, 78],
+            [46, 65, 85, 80],
+            [48, 68, 92, 88],
+            [50, 72, 95, 91],
+            [58, 78, 88, 86],
+            [62, 82, 96, 89],
+          ],
+          peakTimes: { 0: '09:15', 1: '13:15', 2: '19:45', 3: '22:00' },
+          reason: 'Longer watch-time stories perform best when viewers are relaxed on couches in the evening & late night.',
+        },
+        'Comedy / Trending': {
+          // Peaks Fri, Sat, Sun midday & late night
+          matrix: [
+            [50, 74, 82, 78],
+            [52, 76, 84, 80],
+            [54, 78, 86, 82],
+            [56, 80, 88, 84],
+            [60, 88, 95, 96],
+            [68, 92, 94, 97],
+            [66, 90, 93, 91],
+          ],
+          peakTimes: { 0: '09:30', 1: '13:00', 2: '19:00', 3: '22:15' },
+          reason: 'Fast-paced entertainment & audio trends spike sharply during weekend hangouts and late-night scrolling.',
+        },
+      };
+
+      const SLOT_LABELS = ['Morning (7–10a)', 'Midday (12–2p)', 'Evening (6–9p)', 'Late (9–11p)'];
+      const DAY_NAMES_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+      // =========================================================================
+      // 3. UTILITIES
+      // =========================================================================
+      function generateId(prefix = 'id') {
+        return `${prefix}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      }
+
+      function formatDateISO(dateObj) {
+        const y = dateObj.getFullYear();
+        const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const d = String(dateObj.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+
+      function parseISODate(isoStr) {
+        const [y, m, d] = isoStr.split('-').map(Number);
+        return new Date(y, m - 1, d);
+      }
+
+      function formatDisplayDate(isoStr) {
+        const d = parseISODate(isoStr);
+        return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      }
+
+      function formatTime12h(time24) {
+        if (!time24) return '';
+        const [hStr, mStr] = time24.split(':');
+        let h = parseInt(hStr, 10);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        return `${h}:${mStr} ${ampm}`;
+      }
+
+      function getMondayIndex(dateObj) {
+        // Converts JS getDay() (0=Sun..6=Sat) to (0=Mon..6=Sun)
+        return (dateObj.getDay() + 6) % 7;
+      }
+
+      function escapeHtml(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      // Safe clipboard copy (iframe-friendly via execCommand fallback)
+      function copyToClipboard(text, successMsg = 'Copied to clipboard!') {
+        try {
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          textarea.setAttribute('readonly', '');
+          textarea.style.position = 'fixed';
+          textarea.style.top = '-9999px';
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
+          showToast(successMsg, 'cyan');
+        } catch (err) {
+          showToast('Unable to copy text automatically.', 'rose');
+        }
+      }
+
+      function showToast(message, type = 'cyan') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        const accentClass =
+          type === 'rose'
+            ? 'border-tiktokRose/50 text-white'
+            : type === 'emerald'
+            ? 'border-emerald-500/50 text-white'
+            : 'border-tiktokCyan/50 text-white';
+        const dotClass =
+          type === 'rose' ? 'bg-tiktokRose' : type === 'emerald' ? 'bg-emerald-400' : 'bg-tiktokCyan';
+
+        toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl bg-surface/95 backdrop-blur border ${accentClass} shadow-xl text-xs font-medium transition-all duration-300 translate-y-2 opacity-0`;
+        toast.innerHTML = `<span class="w-2 h-2 rounded-full ${dotClass} shrink-0"></span><span class="flex-1">${escapeHtml(message)}</span>`;
+        container.appendChild(toast);
+
+        requestAnimationFrame(() => {
+          toast.classList.remove('translate-y-2', 'opacity-0');
+        });
+
+        setTimeout(() => {
+          toast.classList.add('translate-y-2', 'opacity-0');
+          setTimeout(() => toast.remove(), 300);
+        }, 3200);
+      }
+
+      function openConfirmModal(title, message, onConfirm) {
+        document.getElementById('confirmModalTitle').textContent = title;
+        document.getElementById('confirmModalMsg').textContent = message;
+        state.pendingConfirmAction = onConfirm;
+        const modal = document.getElementById('confirmModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      function closeConfirmModal() {
+        const modal = document.getElementById('confirmModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        state.pendingConfirmAction = null;
+      }
+
+      // =========================================================================
+      // 4. PERSISTENCE & SEED DATA
+      // =========================================================================
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEYS.SCRIPTS, JSON.stringify(state.scripts));
+          localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(state.posts));
+          localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(state.config));
+        } catch (err) {
+          console.error('LocalStorage save error:', err);
+        }
+        updateSidebarStats();
+      }
+
+      function loadState() {
+        try {
+          const savedConfig = JSON.parse(localStorage.getItem(STORAGE_KEYS.CONFIG));
+          if (savedConfig) state.config = { ...state.config, ...savedConfig };
+
+          const savedScripts = JSON.parse(localStorage.getItem(STORAGE_KEYS.SCRIPTS));
+          const savedPosts = JSON.parse(localStorage.getItem(STORAGE_KEYS.POSTS));
+
+          if (Array.isArray(savedScripts) && savedScripts.length > 0) {
+            state.scripts = savedScripts;
+          } else {
+            state.scripts = getSeedScripts();
+          }
+
+          if (Array.isArray(savedPosts) && savedPosts.length > 0) {
+            state.posts = savedPosts;
+          } else {
+            state.posts = getSeedPosts(state.scripts);
+          }
+          saveState();
+        } catch (err) {
+          console.error('LocalStorage load error:', err);
+          state.scripts = getSeedScripts();
+          state.posts = getSeedPosts(state.scripts);
+        }
+      }
+
+      function getSeedScripts() {
+        const now = new Date().toISOString();
+        return [
+          {
+            id: 'scr_seed_1',
+            title: '3 Golden-Hour Lighting Hacks on iPhone',
+            niche: 'Photography & BTS',
+            duration: '30s',
+            hookStyle: 'Visual Transition',
+            tone: 'Cinematic & Aesthetic',
+            status: 'Ready to Film',
+            createdAt: now,
+            updatedAt: now,
+            content: `==================================================
+0–3s HOOK (VISUAL TRANSITION)
+==================================================
+[VISUAL CUE]: Snap fingers in front of lens — hard cut from flat indoor footage to glowing golden-hour silhouette.
+[SPOKEN LINE]: "Stop shooting directly into the sun—do this 2-second angle shift instead."
+[ON-SCREEN TEXT]: "WHY YOUR IPHONE FOOTAGE LOOKS FLAT 👇"
+
+==================================================
+BODY / MAIN BEATS (30s PACING)
+==================================================
+[0:03 – 0:10] Beat 1 — Lock Exposure Down
+• Camera/B-Roll: Screen recording of tapping subject + sliding sun icon down -0.7 EV.
+• Dialogue: "First, tap your subject and drag exposure down just a notch. It instantly saves the sky highlights."
+
+[0:10 – 0:19] Beat 2 — 45° Rim Light Placement
+• Camera/B-Roll: Overhead BTS shot showing subject rotating 45 degrees so sunlight outlines hair & shoulders.
+• Dialogue: "Second, place the sun behind their shoulder at 45 degrees—that warm edge light gives instant cinema depth."
+
+[0:19 – 0:26] Beat 3 — 2x Telephoto Compression
+• Camera/B-Roll: Side-by-side split screen comparing 1x wide vs 2x lens background blur.
+• Dialogue: "Third, switch to the 2x lens and step back. Your background melts without fake portrait blur."
+
+==================================================
+CALL TO ACTION (CTA)
+==================================================
+[0:26 – 0:30]
+• Dialogue: "Save this for your next sunset shoot—and comment 'LUT' if you want my exact color settings."
+
+==================================================
+CAPTION & TRENDING HASHTAGS
+==================================================
+Caption: You don't need a $5K cinema rig for golden hour. Just lock exposure, angle for rim light, and step back to 2x. 🌅🎥
+Hashtags: #iphonefilmmaking #cinematographytips #behindthescenes #contentcreator #mobilevideography
+
+==================================================
+AUDIO / PACING NOTE
+==================================================
+• Track: Ambient lo-fi / warm indie synth beat (~95 BPM) at 18% volume under voiceover.
+• Cuts: Cut strictly on beat drops every 2.5–3 seconds to keep 30s retention above 45%.`,
+          },
+          {
+            id: 'scr_seed_2',
+            title: 'How We Turn 1 Client Shoot into 14 TikToks',
+            niche: 'Creative Agency',
+            duration: '60s',
+            hookStyle: 'Bold Statement',
+            tone: 'Educational & Sharp',
+            status: 'Scheduled',
+            createdAt: now,
+            updatedAt: now,
+            content: `==================================================
+0–3s HOOK (BOLD STATEMENT)
+==================================================
+[VISUAL CUE]: Fast handheld whip-pan across studio desk showing 3 cameras, storyboard sticky notes, and laptop timeline.
+[SPOKEN LINE]: "Most brands burn their entire budget filming one polished ad—here's how we pull 14 TikToks from the exact same afternoon."
+[ON-SCREEN TEXT]: "1 SHOOT = 14 TIKTOKS (AGENCY SYSTEM)"
+
+==================================================
+BODY / MAIN BEATS (60s PACING)
+==================================================
+[0:03 – 0:16] Beat 1 — The 3-Camera Pyramid
+• Camera/B-Roll: Quick cuts of A-cam (hero), B-cam (tight product macro), and iPhone on tripod (raw BTS).
+• Dialogue: "While A-cam shoots the hero commercial, we mount an iPhone purely for raw behind-the-scenes. Raw BTS consistently outperforms polished ads by 3x."
+
+[0:16 – 0:34] Beat 2 — Hook Variations on Set
+• Camera/B-Roll: Talent delivering 3 different opening lines in rapid succession.
+• Dialogue: "Before we wrap any scene, we record three different 3-second hooks—one curiosity gap, one bold claim, and one visual prop reveal. Same body, triple the testing."
+
+[0:34 – 0:50] Beat 3 — Micro-Story Cutdowns
+• Camera/B-Roll: Timeline zooming in on 15-second vertical slices labeled 'Sound Design', 'Founder Story', 'Before/After'.
+• Dialogue: "Then in post, we slice out micro-moments: an ASMR packaging clip, a 15-second color-grade before/after, and a founder voiceover."
+
+==================================================
+CALL TO ACTION (CTA)
+==================================================
+[0:50 – 1:00]
+• Dialogue: "Follow for more agency workflows—and drop 'SYSTEM' below if you want our shot-list template."
+
+==================================================
+CAPTION & TRENDING HASHTAGS
+==================================================
+Caption: Stop filming one video at a time. Build a capture system on set so your content calendar stays full for weeks. ⚡🎬
+Hashtags: #creativeagency #contentstrategy #tiktokmarketing #videoproduction #socialmediatips
+
+==================================================
+AUDIO / PACING NOTE
+==================================================
+• Track: Crisp percussive tech-house / clean minimalist beat (~118 BPM) at 14% volume.
+• Pacing: Add subtle whoosh SFX on B-roll transitions and bold kinetic captions centered in the safe zone.`,
+          },
+        ];
+      }
+
+      function getSeedPosts(scripts) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        const clampDay = (d) => Math.min(Math.max(1, d), daysInMonth);
+        const todayDay = now.getDate();
+
+        const d1 = formatDateISO(new Date(year, month, clampDay(todayDay + 1)));
+        const d2 = formatDateISO(new Date(year, month, clampDay(todayDay + 3)));
+        const d3 = formatDateISO(new Date(year, month, clampDay(Math.max(1, todayDay - 2))));
+
+        return [
+          {
+            id: 'post_seed_1',
+            title: scripts[0]?.title || '3 Golden-Hour Lighting Hacks on iPhone',
+            scriptId: scripts[0]?.id || '',
+            niche: 'Photography & BTS',
+            date: d1,
+            time: '19:15',
+            status: 'Scheduled',
+            trendScore: 95,
+            notes: 'Export in 4K 30fps, add subtle film grain overlay.',
+          },
+          {
+            id: 'post_seed_2',
+            title: scripts[1]?.title || 'How We Turn 1 Client Shoot into 14 TikToks',
+            scriptId: scripts[1]?.id || '',
+            niche: 'Creative Agency',
+            date: d2,
+            time: '12:15',
+            status: 'Edited',
+            trendScore: 94,
+            notes: 'Pin comment with shot-list CTA right after posting.',
+          },
+          {
+            id: 'post_seed_3',
+            title: 'Desk Setup Night Routine + Studio Gear Tour',
+            scriptId: '',
+            niche: 'Lifestyle & Fashion',
+            date: d3,
+            time: '19:30',
+            status: 'Posted',
+            trendScore: 91,
+            notes: 'Posted with warm ambient sound — strong watch time.',
+          },
+        ];
+      }
+
+      // =========================================================================
+      // 5. NAVIGATION & SIDEBAR
+      // =========================================================================
+      function switchView(viewName) {
+        state.activeView = viewName;
+        document.querySelectorAll('.view-panel').forEach((el) => el.classList.add('hidden'));
+        const target = document.getElementById(`view-${viewName}`);
+        if (target) target.classList.remove('hidden');
+
+        document.querySelectorAll('.nav-btn').forEach((btn) => {
+          const active = btn.dataset.view === viewName;
+          if (active) {
+            btn.className =
+              'nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left bg-elevated text-white border border-borderSubtle shadow-xs';
+            btn.querySelector('svg').classList.add('text-tiktokCyan');
+          } else {
+            btn.className =
+              'nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left text-zinc-400 hover:text-white hover:bg-elevated/50 border border-transparent';
+            btn.querySelector('svg').classList.remove('text-tiktokCyan');
+          }
+        });
+
+        // Refresh view-specific content
+        if (viewName === 'calendar') {
+          renderCalendar();
+          renderRecommendedSlots();
+          renderHeatmap();
+          renderUpcomingQueue();
+        } else if (viewName === 'studio') {
+          renderScriptsLibrary();
+        } else if (viewName === 'setup') {
+          document.getElementById('setupEndpointInput').value = state.config.apiEndpoint;
+        }
+
+        closeMobileSidebar();
+      }
+
+      function openMobileSidebar() {
+        document.getElementById('sidebar').classList.remove('-translate-x-full');
+        document.getElementById('mobileOverlay').classList.remove('hidden');
+      }
+
+      function closeMobileSidebar() {
+        document.getElementById('sidebar').classList.add('-translate-x-full');
+        document.getElementById('mobileOverlay').classList.add('hidden');
+      }
+
+      function updateSidebarStats() {
+        document.getElementById('statScriptsCount').textContent = state.scripts.length;
+        const scheduledCount = state.posts.filter((p) => p.status !== 'Posted').length;
+        document.getElementById('statPostsCount').textContent = scheduledCount;
+      }
+
+      function updateModeUI() {
+        const isLive = state.config.mode === 'live';
+        document.querySelectorAll('.mode-toggle-btn').forEach((btn) => {
+          const active = btn.dataset.mode === state.config.mode;
+          if (active) {
+            btn.className = isLive
+              ? 'mode-toggle-btn px-2.5 py-1 rounded-md font-medium transition bg-tiktokRose/20 text-tiktokRose border border-tiktokRose/40'
+              : 'mode-toggle-btn px-2.5 py-1 rounded-md font-medium transition bg-tiktokCyan/15 text-tiktokCyan border border-tiktokCyan/35';
+          } else {
+            btn.className =
+              'mode-toggle-btn px-2.5 py-1 rounded-md font-medium transition text-zinc-400 hover:text-white border border-transparent';
+          }
+        });
+
+        const badge = document.getElementById('activeModeBadge');
+        const dot = document.getElementById('sidebarModeDot');
+        const text = document.getElementById('sidebarModeText');
+
+        if (isLive) {
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-tiktokRose animate-pulse"></span><span>Live Claude API (${escapeHtml(state.config.apiEndpoint)})</span>`;
+          dot.className = 'w-2 h-2 rounded-full bg-tiktokRose shrink-0';
+          text.textContent = 'Live Claude API';
+        } else {
+          badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-tiktokCyan animate-pulse"></span><span>Demo Mode (Instant Preview)</span>`;
+          dot.className = 'w-2 h-2 rounded-full bg-tiktokCyan shrink-0';
+          text.textContent = 'Demo Mode';
+        }
+
+        document.getElementById('liveApiErrorBanner').classList.add('hidden');
+      }
+
+      // =========================================================================
+      // 6. SCRIPT STUDIO: DEMO GENERATOR & LIVE CLAUDE API
+      // =========================================================================
+      function buildDemoScript({ topic, niche, details, duration, hookStyle, tone }) {
+        const cleanTopic = topic.trim();
+        const detailLines = details
+          .split(/\n|,|\./)
+          .map((s) => s.trim())
+          .filter((s) => s.length > 3);
+
+        const point1 = detailLines[0] || `Show the core transformation behind "${cleanTopic}"`;
+        const point2 = detailLines[1] || `Break down the exact step most creators overlook`;
+        const point3 = detailLines[2] || `Reveal the final polished result with a clean side-by-side`;
+
+        const hookTemplates = {
+          'Curiosity Gap': {
+            visual: `Tight close-up lens pull focusing straight onto the key visual of "${cleanTopic}".`,
+            spoken: `"Nobody talks about the real reason ${cleanTopic.toLowerCase()} works so well—watch the 3rd step."`,
+            text: `THE SECRET TO ${cleanTopic.toUpperCase().slice(0, 34)} 👀`,
+          },
+          'Bold Statement': {
+            visual: `Confident direct-to-camera frame with punch-in zoom on word 3.`,
+            spoken: `"Unpopular opinion: 90% of people get ${cleanTopic.toLowerCase()} completely backwards."`,
+            text: `STOP DOING THIS WRONG ❌`,
+          },
+          'Visual Transition': {
+            visual: `Hand covers lens → whip-pan match cut straight into the finished result of "${cleanTopic}".`,
+            spoken: `"Here's how to go from zero to this in under ${duration}..."`,
+            text: `WAIT FOR THE TRANSITION ⚡`,
+          },
+          Storytime: {
+            visual: `Candid handheld vlog framing while setting up your scene.`,
+            spoken: `"I almost scrapped this entire project until I figured out this one shift with ${cleanTopic.toLowerCase()}."`,
+            text: `STORYTIME: HOW THIS ALMOST FAILED`,
+          },
+          'Relatable Problem': {
+            visual: `Split-screen showing the frustrating "before" moment vs calm "after" setup.`,
+            spoken: `"Ever spend hours on ${cleanTopic.toLowerCase()} only for it to flop? Same—until I started doing this."`,
+            text: `IF YOU STRUGGLE WITH THIS, WATCH 👇`,
+          },
+        };
+
+        const hook = hookTemplates[hookStyle] || hookTemplates['Curiosity Gap'];
+
+        // Timestamp pacing based on duration
+        const pacingMap = {
+          '15s': { b1: '0:03 – 0:07', b2: '0:07 – 0:11', b3: '0:11 – 0:13', cta: '0:13 – 0:15', bpm: '124 BPM high-energy' },
+          '30s': { b1: '0:03 – 0:11', b2: '0:11 – 0:20', b3: '0:20 – 0:26', cta: '0:26 – 0:30', bpm: '108 BPM crisp modern' },
+          '60s': { b1: '0:03 – 0:18', b2: '0:18 – 0:36', b3: '0:36 – 0:51', cta: '0:51 – 1:00', bpm: '98 BPM clean atmospheric' },
+          '90s+': { b1: '0:03 – 0:28', b2: '0:28 – 0:56', b3: '0:56 – 1:20', cta: '1:20 – 1:32', bpm: '90 BPM storytelling lo-fi' },
+        };
+        const p = pacingMap[duration] || pacingMap['30s'];
+
+        const hashtagMap = {
+          'Photography & BTS': '#behindthescenes #photographyhacks #cinematicvideo #creatorworkflow #filmmaking',
+          'Lifestyle & Fashion': '#lifestyleaesthetic #ootdinspo #dailyroutine #minimalstyle #aestheticvibes',
+          'Creative Agency': '#creativeagency #brandstrategy #contentmarketing #agencylife #socialmediagrowth',
+          'Educational / Tips': '#tiktoktips #learnontiktok #creatortips #productivityhacks #stepbystep',
+          'Storytelling / Vlog': '#dayinmylife #storytimetiktok #creatorvlog #candidmoments #realstory',
+          'Comedy / Trending': '#relatablecontent #tiktoktrending #creatorhumor #fypシ #pov',
+        };
+        const tags = hashtagMap[niche] || '#tiktokcreator #contentstrategy #viralreels';
+
+        return `==================================================
+0–3s HOOK (${hookStyle.toUpperCase()})
+==================================================
+[VISUAL CUE]: ${hook.visual}
+[SPOKEN LINE]: ${hook.spoken}
+[ON-SCREEN TEXT]: "${hook.text}"
+
+==================================================
+BODY / MAIN BEATS (${duration} • ${tone})
+==================================================
+[${p.b1}] Beat 1 — Setup & Context
+• Camera/B-Roll: Dynamic angle shift (medium shot → tight detail insert) to reset viewer attention at 3 seconds.
+• Dialogue: "First thing you need to lock in: ${point1}. Keep it simple so the visual speaks immediately."
+
+[${p.b2}] Beat 2 — The Core Breakthrough
+• Camera/B-Roll: Over-the-shoulder / POV demonstration with subtle pop-up text callouts.
+• Dialogue: "Next, here's where everything levels up—${point2}. Most creators rush past this, which is why their results look generic."
+
+[${p.b3}] Beat 3 — Payoff & Proof
+• Camera/B-Roll: Clean before-and-after reveal or hero slow-motion clip showing the final outcome.
+• Dialogue: "Put those together and you get this: ${point3}."
+
+==================================================
+CALL TO ACTION (CTA)
+==================================================
+[${p.cta}]
+• Visual: Direct eye contact + subtle point toward the save/comment icons.
+• Dialogue: "Bookmark this so you don't lose it—and drop a comment if you want a Part 2 breaking down the exact settings."
+
+==================================================
+CAPTION & TRENDING HASHTAGS
+==================================================
+Caption: ${cleanTopic} — broken down in ${duration}. Save this for your next session and let me know which beat helped most. ⚡
+Hashtags: ${tags}
+
+==================================================
+AUDIO / PACING NOTE
+==================================================
+• Audio Bed: ${p.bpm} instrumental track sitting at 15–18% volume behind crisp voiceover.
+• Delivery (${tone}): Trim all dead-air breaths; change framing or add B-roll every 2.5–3.5 seconds for peak retention.`;
+      }
+
+      async function handleGenerateScript(e, forceDemo = false) {
+        if (e) e.preventDefault();
+
+        const topic = document.getElementById('inputTopic').value.trim();
+        const niche = document.getElementById('inputNiche').value;
+        const hookStyle = document.getElementById('inputHookStyle').value;
+        const tone = document.getElementById('inputTone').value;
+        const details = document.getElementById('inputDetails').value.trim();
+        const duration = state.selectedDuration;
+
+        if (!topic) {
+          showToast('Please enter a Video Topic / Title first.', 'rose');
+          document.getElementById('inputTopic').focus();
+          return;
+        }
+
+        const btn = document.getElementById('generateScriptBtn');
+        const spinner = document.getElementById('generateSpinner');
+        const icon = document.getElementById('generateIcon');
+        const btnText = document.getElementById('generateBtnText');
+        const errorBanner = document.getElementById('liveApiErrorBanner');
+
+        errorBanner.classList.add('hidden');
+        btn.disabled = true;
+        spinner.classList.remove('hidden');
+        icon.classList.add('hidden');
+        btnText.textContent =
+          state.config.mode === 'live' && !forceDemo ? 'Calling Claude API...' : 'Crafting TikTok Script...';
+
+        try {
+          let generatedText = '';
+
+          if (state.config.mode === 'live' && !forceDemo) {
+            const response = await fetch(state.config.apiEndpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ topic, niche, details, duration, hookStyle, tone }),
+            });
+
+            if (!response.ok) {
+              const errData = await response.json().catch(() => ({}));
+              throw new Error(errData.error || `HTTP ${response.status} from ${state.config.apiEndpoint}`);
+            }
+
+            const data = await response.json();
+            generatedText = data.script || data.content || '';
+            if (!generatedText) throw new Error('API returned an empty script payload.');
+            showToast('Script generated via Live Claude API!', 'emerald');
+          } else {
+            // Simulate snappy realistic generation feel
+            await new Promise((r) => setTimeout(r, 550));
+            generatedText = buildDemoScript({ topic, niche, details, duration, hookStyle, tone });
+            showToast('Script generated in Demo Mode!', 'cyan');
+          }
+
+          // Load into right-side editor
+          state.editingScriptId = null;
+          document.getElementById('editorScriptTitle').value = topic;
+          document.getElementById('editorMetaNiche').textContent = niche;
+          document.getElementById('editorMetaDuration').textContent = duration;
+          document.getElementById('editorScriptStatus').value = 'Draft';
+          document.getElementById('scriptOutputEditor').value = generatedText;
+          document.getElementById('saveScriptBtnText').textContent = 'Save to Library';
+          updateEditorWordCount();
+        } catch (err) {
+          console.warn('Live Claude API error:', err);
+          document.getElementById('liveApiErrorMsg').textContent =
+            `${err.message}. Deploy to Vercel with ANTHROPIC_API_KEY or generate right now in Demo Mode.`;
+          errorBanner.classList.remove('hidden');
+          showToast('Live API unreachable — Demo Mode available.', 'rose');
+        } finally {
+          btn.disabled = false;
+          spinner.classList.add('hidden');
+          icon.classList.remove('hidden');
+          btnText.textContent = 'Generate Script with Claude';
+        }
+      }
+
+      function updateEditorWordCount() {
+        const text = document.getElementById('scriptOutputEditor').value.trim();
+        const words = text ? text.split(/\s+/).length : 0;
+        // Average spoken TikTok pace ~150 wpm (including visual directions, rough read estimate)
+        const estSec = Math.round((words / 2.6));
+        document.getElementById('editorWordCount').textContent = `${words} words (~${estSec}s read)`;
+      }
+
+      function saveCurrentScript() {
+        const title = document.getElementById('editorScriptTitle').value.trim();
+        const content = document.getElementById('scriptOutputEditor').value.trim();
+        const status = document.getElementById('editorScriptStatus').value;
+        const niche = document.getElementById('editorMetaNiche').textContent || document.getElementById('inputNiche').value;
+        const duration = document.getElementById('editorMetaDuration').textContent || state.selectedDuration;
+
+        if (!title) {
+          showToast('Give your script a title before saving.', 'rose');
+          document.getElementById('editorScriptTitle').focus();
+          return null;
+        }
+        if (!content) {
+          showToast('Script editor is empty.', 'rose');
+          return null;
+        }
+
+        const now = new Date().toISOString();
+        let savedScript;
+
+        if (state.editingScriptId) {
+          const idx = state.scripts.findIndex((s) => s.id === state.editingScriptId);
+          if (idx !== -1) {
+            state.scripts[idx] = {
+              ...state.scripts[idx],
+              title,
+              content,
+              status,
+              niche,
+              duration,
+              updatedAt: now,
+            };
+            savedScript = state.scripts[idx];
+            showToast('Script updated in library.', 'cyan');
+          }
+        }
+
+        if (!savedScript) {
+          savedScript = {
+            id: generateId('scr'),
+            title,
+            niche,
+            duration,
+            hookStyle: document.getElementById('inputHookStyle').value,
+            tone: document.getElementById('inputTone').value,
+            status,
+            content,
+            createdAt: now,
+            updatedAt: now,
+          };
+          state.scripts.unshift(savedScript);
+          state.editingScriptId = savedScript.id;
+          document.getElementById('saveScriptBtnText').textContent = 'Update Saved Script';
+          showToast('Script saved to library!', 'emerald');
+        }
+
+        saveState();
+        renderScriptsLibrary();
+        return savedScript;
+      }
+
+      function loadScriptIntoEditor(scriptId) {
+        const scr = state.scripts.find((s) => s.id === scriptId);
+        if (!scr) return;
+        state.editingScriptId = scr.id;
+        document.getElementById('editorScriptTitle').value = scr.title;
+        document.getElementById('editorMetaNiche').textContent = scr.niche;
+        document.getElementById('editorMetaDuration').textContent = scr.duration;
+        document.getElementById('editorScriptStatus').value = scr.status;
+        document.getElementById('scriptOutputEditor').value = scr.content;
+        document.getElementById('saveScriptBtnText').textContent = 'Update Saved Script';
+        updateEditorWordCount();
+
+        // Sync form inputs for convenience
+        document.getElementById('inputTopic').value = scr.title;
+        document.getElementById('inputNiche').value = scr.niche;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        showToast(`Loaded "${scr.title}"`, 'cyan');
+      }
+
+      function resetEditor() {
+        state.editingScriptId = null;
+        document.getElementById('editorScriptTitle').value = '';
+        document.getElementById('scriptOutputEditor').value = '';
+        document.getElementById('editorScriptStatus').value = 'Draft';
+        document.getElementById('editorMetaNiche').textContent = document.getElementById('inputNiche').value;
+        document.getElementById('editorMetaDuration').textContent = state.selectedDuration;
+        document.getElementById('saveScriptBtnText').textContent = 'Save to Library';
+        updateEditorWordCount();
+      }
+
+      function getStatusBadgeClasses(status) {
+        const map = {
+          Draft: 'bg-zinc-800 text-zinc-300 border-zinc-700',
+          Idea: 'bg-zinc-800 text-zinc-300 border-zinc-700',
+          Scripted: 'bg-zinc-800 text-zinc-200 border-zinc-700',
+          'Ready to Film': 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+          Filmed: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+          Edited: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
+          Scheduled: 'bg-tiktokCyan/15 text-tiktokCyan border-tiktokCyan/35',
+          Posted: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+        };
+        return map[status] || 'bg-zinc-800 text-zinc-300 border-zinc-700';
+      }
+
+      function renderScriptsLibrary() {
+        const grid = document.getElementById('scriptsLibraryGrid');
+        const query = document.getElementById('librarySearchInput').value.trim().toLowerCase();
+        const statusFilter = document.getElementById('libraryStatusFilter').value;
+
+        const filtered = state.scripts.filter((s) => {
+          const matchesQuery =
+            !query ||
+            s.title.toLowerCase().includes(query) ||
+            s.niche.toLowerCase().includes(query) ||
+            s.content.toLowerCase().includes(query);
+          const matchesStatus = statusFilter === 'ALL' || s.status === statusFilter;
+          return matchesQuery && matchesStatus;
+        });
+
+        if (filtered.length === 0) {
+          grid.innerHTML = `
+            <div class="col-span-full py-10 text-center border border-dashed border-borderSubtle rounded-xl">
+              <p class="text-sm text-zinc-400">No scripts match your filter.</p>
+              <p class="text-xs text-zinc-500 mt-1">Generate a new script above to build your library.</p>
+            </div>`;
+          return;
+        }
+
+        grid.innerHTML = filtered
+          .map((s) => {
+            const previewSnippet = s.content.replace(/=+/g, '').replace(/\s+/g, ' ').trim().slice(0, 105);
+            const dateStr = new Date(s.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            return `
+              <div class="bg-obsidian border border-borderSubtle hover:border-zinc-700 rounded-xl p-4 flex flex-col justify-between gap-3 transition group">
+                <div class="space-y-2">
+                  <div class="flex items-start justify-between gap-2">
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-medium border ${getStatusBadgeClasses(s.status)}">${escapeHtml(s.status)}</span>
+                    <span class="text-[11px] font-mono text-zinc-500">${escapeHtml(s.duration)} • ${dateStr}</span>
+                  </div>
+                  <h4 class="text-sm font-semibold text-white line-clamp-1 group-hover:text-tiktokCyan transition">${escapeHtml(s.title)}</h4>
+                  <p class="text-[11px] text-zinc-500 font-medium">${escapeHtml(s.niche)}</p>
+                  <p class="text-xs text-zinc-400 line-clamp-2 leading-relaxed">${escapeHtml(previewSnippet)}...</p>
+                </div>
+                <div class="flex items-center justify-between gap-2 pt-2.5 border-t border-borderSubtle/80">
+                  <div class="flex items-center gap-1.5">
+                    <button type="button" data-action="load" data-id="${s.id}" class="lib-action-btn px-2.5 py-1.5 rounded-lg bg-elevated hover:bg-zinc-800 text-xs font-medium text-zinc-200 transition">Edit</button>
+                    <button type="button" data-action="schedule" data-id="${s.id}" class="lib-action-btn px-2.5 py-1.5 rounded-lg bg-tiktokCyan/10 hover:bg-tiktokCyan/20 text-xs font-medium text-tiktokCyan transition">Schedule</button>
+                  </div>
+                  <button type="button" data-action="delete" data-id="${s.id}" class="lib-action-btn p-1.5 rounded-lg text-zinc-500 hover:text-tiktokRose hover:bg-tiktokRose/10 transition" aria-label="Delete Script">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            `;
+          })
+          .join('');
+      }
+
+      // =========================================================================
+      // 7. TREND ENGINE: ANALYZE SLOTS & AVOID CONFLICTS
+      // =========================================================================
+      function getTopRecommendedSlots(niche, count = 3) {
+        const profile = TREND_PROFILES[niche] || TREND_PROFILES['Photography & BTS'];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const candidates = [];
+
+        // Scan next 14 days
+        for (let offset = 1; offset <= 14; offset++) {
+          const d = new Date(today);
+          d.setDate(today.getDate() + offset);
+          const iso = formatDateISO(d);
+          const dayIdx = getMondayIndex(d);
+
+          // Check existing posts on this date or adjacent dates
+          const sameDayPosts = state.posts.filter((p) => p.date === iso);
+          const prevDay = new Date(d);
+          prevDay.setDate(d.getDate() - 1);
+          const prevDayPosts = state.posts.filter((p) => p.date === formatDateISO(prevDay));
+
+          // Evaluate all 4 time slots for this day
+          profile.matrix[dayIdx].forEach((baseScore, slotIdx) => {
+            const suggestedTime = profile.peakTimes[slotIdx];
+            let adjustedScore = baseScore;
+
+            // Penalize double-booking same day heavily
+            if (sameDayPosts.length > 0) {
+              adjustedScore -= 28 * sameDayPosts.length;
+            }
+            // Slight penalty for back-to-back days to encourage healthy spacing
+            if (prevDayPosts.length > 0) {
+              adjustedScore -= 4;
+            }
+            // Slight bonus for sooner dates (within next 7 days)
+            if (offset <= 7) {
+              adjustedScore += 2;
+            }
+
+            adjustedScore = Math.max(40, Math.min(99, adjustedScore));
+
+            candidates.push({
+              date: iso,
+              time: suggestedTime,
+              score: adjustedScore,
+              slotLabel: SLOT_LABELS[slotIdx],
+              dayName: DAY_NAMES_SHORT[dayIdx],
+              reason: profile.reason,
+              hasConflict: sameDayPosts.length > 0,
+            });
+          });
+        }
+
+        // Sort descending by score, then pick unique dates for Top N
+        candidates.sort((a, b) => b.score - a.score);
+        const picked = [];
+        const usedDates = new Set();
+
+        for (const c of candidates) {
+          if (!usedDates.has(c.date)) {
+            picked.push(c);
+            usedDates.add(c.date);
+          }
+          if (picked.length >= count) break;
+        }
+
+        return picked;
+      }
+
+      function getBestTimeForSpecificDate(isoDate, niche) {
+        const profile = TREND_PROFILES[niche] || TREND_PROFILES['Photography & BTS'];
+        const d = parseISODate(isoDate);
+        const dayIdx = getMondayIndex(d);
+        const dayScores = profile.matrix[dayIdx];
+
+        let bestIdx = 0;
+        let bestScore = -1;
+        dayScores.forEach((sc, idx) => {
+          if (sc > bestScore) {
+            bestScore = sc;
+            bestIdx = idx;
+          }
+        });
+
+        return {
+          time: profile.peakTimes[bestIdx],
+          score: bestScore,
+          slotLabel: SLOT_LABELS[bestIdx],
+        };
+      }
+
+      function renderRecommendedSlots() {
+        const niche = document.getElementById('trendNicheSelect').value;
+        const tz = document.getElementById('trendTimezoneSelect').value;
+        const tzLabel =
+          tz === 'LOCAL'
+            ? Intl.DateTimeFormat().resolvedOptions().timeZone || 'Local'
+            : tz;
+
+        const slots = getTopRecommendedSlots(niche, 3);
+        const grid = document.getElementById('recommendedSlotsGrid');
+
+        grid.innerHTML = slots
+          .map((slot, idx) => {
+            const rankBadge =
+              idx === 0
+                ? 'bg-tiktokCyan/15 text-tiktokCyan border-tiktokCyan/40'
+                : 'bg-elevated text-zinc-200 border-borderSubtle';
+            return `
+              <div class="bg-obsidian border border-borderSubtle hover:border-tiktokCyan/50 rounded-xl p-4 flex flex-col justify-between gap-3 transition">
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md border ${rankBadge}">${slot.score}% Match</span>
+                    <span class="text-[10px] font-mono text-zinc-500 truncate">${escapeHtml(tzLabel)}</span>
+                  </div>
+                  <div>
+                    <p class="text-sm font-semibold text-white">${formatDisplayDate(slot.date)} • ${formatTime12h(slot.time)}</p>
+                    <p class="text-[11px] text-tiktokCyan/90 font-medium mt-0.5">${slot.slotLabel} Peak Window</p>
+                  </div>
+                  <p class="text-[11px] text-zinc-400 leading-relaxed">${escapeHtml(slot.reason)}</p>
+                </div>
+                <button type="button" data-date="${slot.date}" data-time="${slot.time}" data-score="${slot.score}" data-niche="${escapeHtml(niche)}"
+                  class="use-slot-btn w-full py-2 rounded-lg bg-elevated hover:bg-tiktokCyan/15 border border-borderSubtle hover:border-tiktokCyan/40 text-xs font-medium text-zinc-200 hover:text-tiktokCyan transition">
+                  Use This Slot
+                </button>
+              </div>
+            `;
+          })
+          .join('');
+      }
+
+      function renderHeatmap() {
+        const niche = document.getElementById('trendNicheSelect').value;
+        const profile = TREND_PROFILES[niche] || TREND_PROFILES['Photography & BTS'];
+        document.getElementById('heatmapNicheLabel').textContent = `Peak engagement for ${niche}`;
+
+        const container = document.getElementById('trendHeatmapContainer');
+
+        // Header row
+        let html = `
+          <div class="grid grid-cols-5 gap-1.5 text-[10px] text-zinc-500 font-medium pb-1">
+            <div>Day</div>
+            <div class="text-center">Morn</div>
+            <div class="text-center">Mid</div>
+            <div class="text-center">Eve</div>
+            <div class="text-center">Late</div>
+          </div>
+        `;
+
+        DAY_NAMES_SHORT.forEach((day, dIdx) => {
+          html += `<div class="grid grid-cols-5 gap-1.5 items-center">`;
+          html += `<div class="text-xs font-medium text-zinc-400">${day}</div>`;
+          profile.matrix[dIdx].forEach((score, sIdx) => {
+            let cellStyle = 'bg-elevated text-zinc-500 border-borderSubtle';
+            if (score >= 90) {
+              cellStyle = 'bg-tiktokCyan text-obsidian font-bold border-tiktokCyan';
+            } else if (score >= 78) {
+              cellStyle = 'bg-tiktokCyan/55 text-white font-semibold border-tiktokCyan/50';
+            } else if (score >= 62) {
+              cellStyle = 'bg-tiktokCyan/25 text-zinc-200 border-tiktokCyan/20';
+            }
+            html += `
+              <div title="${day} ${SLOT_LABELS[sIdx]}: ${score}% Engagement Score"
+                class="h-7 rounded-lg border text-[10px] font-mono flex items-center justify-center transition ${cellStyle}">
+                ${score}
+              </div>
+            `;
+          });
+          html += `</div>`;
+        });
+
+        container.innerHTML = html;
+      }
+
+      // =========================================================================
+      // 8. INTERACTIVE MONTHLY CALENDAR & QUEUE
+      // =========================================================================
+      function getPostStatusDot(status) {
+        if (status === 'Scheduled') return 'bg-tiktokCyan';
+        if (status === 'Posted') return 'bg-emerald-400';
+        if (status === 'Filmed' || status === 'Edited') return 'bg-amber-400';
+        return 'bg-zinc-400';
+      }
+
+      function renderCalendar() {
+        const year = state.calendarDate.getFullYear();
+        const month = state.calendarDate.getMonth();
+
+        document.getElementById('calendarMonthLabel').textContent = state.calendarDate.toLocaleDateString('en-US', {
+          month: 'long',
+          year: 'numeric',
+        });
+
+        const firstDayOfMonth = new Date(year, month, 1);
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const startOffset = getMondayIndex(firstDayOfMonth); // 0=Mon .. 6=Sun
+
+        const todayISO = formatDateISO(new Date());
+        const grid = document.getElementById('calendarGrid');
+        let html = '';
+
+        // Leading empty cells
+        for (let i = 0; i < startOffset; i++) {
+          html += `<div class="min-h-[82px] sm:min-h-[104px] rounded-xl bg-obsidian/40 border border-borderSubtle/40 p-1.5"></div>`;
+        }
+
+        // Actual days
+        for (let day = 1; day <= daysInMonth; day++) {
+          const cellDate = new Date(year, month, day);
+          const iso = formatDateISO(cellDate);
+          const isToday = iso === todayISO;
+          const dayPosts = state.posts
+            .filter((p) => p.date === iso)
+            .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+
+          const cellBorder = isToday
+            ? 'border-tiktokCyan/70 bg-tiktokCyan/[0.04]'
+            : 'border-borderSubtle bg-obsidian hover:border-zinc-700';
+
+          html += `
+            <div data-date="${iso}" class="calendar-day-cell min-h-[82px] sm:min-h-[104px] rounded-xl border ${cellBorder} p-1.5 sm:p-2 flex flex-col gap-1 cursor-pointer transition group">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-medium ${isToday ? 'text-tiktokCyan font-bold' : 'text-zinc-400 group-hover:text-white'}">${day}</span>
+                <span class="opacity-0 group-hover:opacity-100 text-[10px] text-zinc-500 transition hidden sm:inline">+</span>
+              </div>
+              <div class="space-y-1 overflow-hidden">
+                ${dayPosts
+                  .map(
+                    (post) => `
+                  <button type="button" data-post-id="${post.id}"
+                    class="cal-post-chip w-full text-left px-1.5 py-1 rounded-md bg-elevated hover:bg-zinc-800 border border-borderSubtle text-[10px] leading-tight flex items-center gap-1.5 transition truncate">
+                    <span class="w-1.5 h-1.5 rounded-full ${getPostStatusDot(post.status)} shrink-0"></span>
+                    <span class="font-mono text-zinc-400 hidden sm:inline shrink-0">${post.time}</span>
+                    <span class="text-zinc-100 truncate">${escapeHtml(post.title)}</span>
+                  </button>`
+                  )
+                  .join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        grid.innerHTML = html;
+      }
+
+      function renderUpcomingQueue() {
+        const todayISO = formatDateISO(new Date());
+        const upcoming = state.posts
+          .filter((p) => p.date >= todayISO && p.status !== 'Posted')
+          .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
+
+        document.getElementById('upcomingQueueCount').textContent = `${upcoming.length} post${upcoming.length === 1 ? '' : 's'}`;
+        const list = document.getElementById('upcomingQueueList');
+
+        if (upcoming.length === 0) {
+          list.innerHTML = `
+            <div class="py-6 text-center border border-dashed border-borderSubtle rounded-xl">
+              <p class="text-xs text-zinc-400">No upcoming posts scheduled.</p>
+              <p class="text-[11px] text-zinc-500 mt-0.5">Click any date or "Use This Slot" above.</p>
+            </div>`;
+          return;
+        }
+
+        list.innerHTML = upcoming
+          .map(
+            (p) => `
+            <div data-post-id="${p.id}" class="queue-item-card p-3 rounded-xl bg-obsidian border border-borderSubtle hover:border-zinc-700 cursor-pointer transition space-y-1.5">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[11px] font-mono text-tiktokCyan">${formatDisplayDate(p.date)} • ${formatTime12h(p.time)}</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] border ${getStatusBadgeClasses(p.status)}">${escapeHtml(p.status)}</span>
+              </div>
+              <p class="text-xs font-semibold text-white line-clamp-1">${escapeHtml(p.title)}</p>
+              <div class="flex items-center justify-between text-[11px] text-zinc-500">
+                <span>${escapeHtml(p.niche)}</span>
+                ${p.trendScore ? `<span class="font-mono text-zinc-400">${p.trendScore}% Trend</span>` : ''}
+              </div>
+            </div>`
+          )
+          .join('');
+      }
+
+      // =========================================================================
+      // 9. SCHEDULE / EDIT POST MODAL
+      // =========================================================================
+      function populateModalScriptDropdown(selectedId = '') {
+        const select = document.getElementById('modalScriptSelect');
+        select.innerHTML = `<option value="">— Create standalone post —</option>`;
+        state.scripts.forEach((s) => {
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = `${s.title} (${s.niche})`;
+          if (s.id === selectedId) opt.selected = true;
+          select.appendChild(opt);
+        });
+      }
+
+      function openPostModal({ postId = null, date = '', time = '', title = '', niche = '', scriptId = '', trendScore = null } = {}) {
+        const modal = document.getElementById('postModal');
+        const deleteBtn = document.getElementById('deletePostModalBtn');
+        const scoreBadge = document.getElementById('modalTrendScoreBadge');
+
+        populateModalScriptDropdown(scriptId);
+
+        if (postId) {
+          const existing = state.posts.find((p) => p.id === postId);
+          if (!existing) return;
+          document.getElementById('postModalTitle').textContent = 'Edit Scheduled Post';
+          document.getElementById('modalPostId').value = existing.id;
+          document.getElementById('modalScriptSelect').value = existing.scriptId || '';
+          document.getElementById('modalPostTitle').value = existing.title;
+          document.getElementById('modalPostNiche').value = existing.niche;
+          document.getElementById('modalPostStatus').value = existing.status;
+          document.getElementById('modalPostDate').value = existing.date;
+          document.getElementById('modalPostTime').value = existing.time;
+          document.getElementById('modalPostNotes').value = existing.notes || '';
+          deleteBtn.classList.remove('hidden');
+
+          if (existing.trendScore) {
+            scoreBadge.textContent = `${existing.trendScore}% Trend Match`;
+            scoreBadge.classList.remove('hidden');
+          } else {
+            scoreBadge.classList.add('hidden');
+          }
+        } else {
+          document.getElementById('postModalTitle').textContent = 'Schedule TikTok Post';
+          document.getElementById('modalPostId').value = '';
+          document.getElementById('modalPostTitle').value = title || '';
+          document.getElementById('modalPostNiche').value = niche || document.getElementById('trendNicheSelect').value;
+          document.getElementById('modalPostStatus').value = 'Scheduled';
+          document.getElementById('modalPostDate').value = date || formatDateISO(new Date());
+          document.getElementById('modalPostTime').value = time || '19:00';
+          document.getElementById('modalPostNotes').value = '';
+          deleteBtn.classList.add('hidden');
+
+          if (trendScore) {
+            scoreBadge.textContent = `${trendScore}% Trend Match`;
+            scoreBadge.classList.remove('hidden');
+          } else {
+            scoreBadge.classList.add('hidden');
+          }
+        }
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      function closePostModal() {
+        const modal = document.getElementById('postModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      function handleSavePostModal(e) {
+        e.preventDefault();
+        const id = document.getElementById('modalPostId').value;
+        const scriptId = document.getElementById('modalScriptSelect').value;
+        const title = document.getElementById('modalPostTitle').value.trim();
+        const niche = document.getElementById('modalPostNiche').value;
+        const status = document.getElementById('modalPostStatus').value;
+        const date = document.getElementById('modalPostDate').value;
+        const time = document.getElementById('modalPostTime').value;
+        const notes = document.getElementById('modalPostNotes').value.trim();
+
+        const dayTrend = getBestTimeForSpecificDate(date, niche);
+
+        if (id) {
+          const idx = state.posts.findIndex((p) => p.id === id);
+          if (idx !== -1) {
+            state.posts[idx] = {
+              ...state.posts[idx],
+              scriptId,
+              title,
+              niche,
+              status,
+              date,
+              time,
+              notes,
+              trendScore: dayTrend.score,
+            };
+            showToast('Scheduled post updated.', 'cyan');
+          }
+        } else {
+          state.posts.push({
+            id: generateId('post'),
+            scriptId,
+            title,
+            niche,
+            status,
+            date,
+            time,
+            notes,
+            trendScore: dayTrend.score,
+          });
+          showToast('Post added to publishing calendar!', 'emerald');
+        }
+
+        // If linked to a script, sync its status to Scheduled if it was Draft/Ready
+        if (scriptId && status === 'Scheduled') {
+          const scr = state.scripts.find((s) => s.id === scriptId);
+          if (scr && scr.status !== 'Posted') {
+            scr.status = 'Scheduled';
+          }
+        }
+
+        saveState();
+        closePostModal();
+        renderCalendar();
+        renderRecommendedSlots();
+        renderUpcomingQueue();
+        renderScriptsLibrary();
+      }
+
+      // =========================================================================
+      // 10. VERCEL & CLAUDE SETUP: CONNECTION TEST
+      // =========================================================================
+      async function handleTestConnection() {
+        const endpoint = document.getElementById('setupEndpointInput').value.trim() || '/api/generate-script';
+        const resultBox = document.getElementById('connectionTestResult');
+        const pill = document.getElementById('setupStatusPill');
+
+        pill.textContent = 'Testing...';
+        pill.className = 'px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-500/15 border border-amber-500/30 text-amber-300';
+        resultBox.classList.add('hidden');
+
+        try {
+          const res = await fetch(endpoint, { method: 'GET' });
+          if (res.ok) {
+            pill.textContent = 'Connected';
+            pill.className = 'px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-500/15 border border-emerald-500/35 text-emerald-300';
+            resultBox.className = 'rounded-xl p-3.5 text-xs border bg-emerald-500/10 border-emerald-500/30 text-emerald-200';
+            resultBox.textContent = `Endpoint ${endpoint} responded with HTTP ${res.status}. Ready for Live Claude API mode!`;
+            resultBox.classList.remove('hidden');
+            showToast('Vercel API endpoint is online!', 'emerald');
+          } else {
+            throw new Error(`HTTP ${res.status} (${res.statusText || 'Error'})`);
+          }
+        } catch (err) {
+          pill.textContent = 'Offline / Local';
+          pill.className = 'px-2.5 py-1 rounded-full text-[11px] font-medium bg-tiktokRose/15 border border-tiktokRose/35 text-tiktokRose';
+          resultBox.className = 'rounded-xl p-3.5 text-xs border bg-tiktokRose/10 border-tiktokRose/30 text-zinc-200';
+          resultBox.innerHTML = `Could not reach <span class="font-mono text-white">${escapeHtml(endpoint)}</span> (${escapeHtml(err.message)}). This is normal when previewing locally without Vercel running. Use <strong>Demo Mode</strong> until deployed.`;
+          resultBox.classList.remove('hidden');
+        }
+      }
+
+      // =========================================================================
+      // 11. EVENT LISTENERS & INITIALIZATION
+      // =========================================================================
+      function bindEvents() {
+        // Sidebar Navigation
+        document.querySelectorAll('.nav-btn').forEach((btn) => {
+          btn.addEventListener('click', () => switchView(btn.dataset.view));
+        });
+        document.getElementById('mobileMenuBtn').addEventListener('click', openMobileSidebar);
+        document.getElementById('closeMobileMenuBtn').addEventListener('click', closeMobileSidebar);
+        document.getElementById('mobileOverlay').addEventListener('click', closeMobileSidebar);
+
+        // Mode Toggle (Demo vs Live)
+        document.querySelectorAll('.mode-toggle-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            state.config.mode = btn.dataset.mode;
+            saveState();
+            updateModeUI();
+            showToast(
+              state.config.mode === 'live'
+                ? 'Switched to Live Claude API mode.'
+                : 'Switched to Demo Mode (Instant Preview).',
+              state.config.mode === 'live' ? 'rose' : 'cyan'
+            );
+          });
+        });
+
+        // Duration Selector
+        document.querySelectorAll('.duration-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            state.selectedDuration = btn.dataset.duration;
+            document.querySelectorAll('.duration-btn').forEach((b) => {
+              const active = b.dataset.duration === state.selectedDuration;
+              b.className = active
+                ? 'duration-btn py-2 rounded-xl text-xs font-medium border border-tiktokCyan bg-tiktokCyan/10 text-tiktokCyan transition'
+                : 'duration-btn py-2 rounded-xl text-xs font-medium border border-borderSubtle bg-obsidian text-zinc-400 hover:text-white transition';
+            });
+            document.getElementById('editorMetaDuration').textContent = state.selectedDuration;
+          });
+        });
+
+        // Script Generator Form
+        document.getElementById('scriptGeneratorForm').addEventListener('submit', (e) => handleGenerateScript(e, false));
+        document.getElementById('fallbackToDemoBtn').addEventListener('click', () => {
+          state.config.mode = 'demo';
+          saveState();
+          updateModeUI();
+          handleGenerateScript(null, true);
+        });
+
+        // Script Editor Actions
+        document.getElementById('scriptOutputEditor').addEventListener('input', updateEditorWordCount);
+        document.getElementById('newScriptResetBtn').addEventListener('click', () => {
+          resetEditor();
+          showToast('Editor cleared for a fresh script.', 'cyan');
+        });
+        document.getElementById('copyScriptBtn').addEventListener('click', () => {
+          const text = document.getElementById('scriptOutputEditor').value;
+          if (!text.trim()) return showToast('Nothing to copy yet.', 'rose');
+          copyToClipboard(text, 'Script copied to clipboard!');
+        });
+        document.getElementById('saveScriptBtn').addEventListener('click', saveCurrentScript);
+
+        // Schedule directly from Editor with AI Trend-Suggested Slot
+        document.getElementById('scheduleFromEditorBtn').addEventListener('click', () => {
+          const title = document.getElementById('editorScriptTitle').value.trim();
+          const content = document.getElementById('scriptOutputEditor').value.trim();
+          const niche = document.getElementById('editorMetaNiche').textContent || document.getElementById('inputNiche').value;
+
+          let linkedId = state.editingScriptId;
+          if (title && content && !linkedId) {
+            const saved = saveCurrentScript();
+            if (saved) linkedId = saved.id;
+          }
+
+          const bestSlots = getTopRecommendedSlots(niche, 1);
+          const best = bestSlots[0];
+          openPostModal({
+            title: title || 'New TikTok Video',
+            niche,
+            scriptId: linkedId || '',
+            date: best ? best.date : formatDateISO(new Date()),
+            time: best ? best.time : '19:00',
+            trendScore: best ? best.score : null,
+          });
+        });
+
+        // Library Search, Filter & Card Actions
+        document.getElementById('librarySearchInput').addEventListener('input', renderScriptsLibrary);
+        document.getElementById('libraryStatusFilter').addEventListener('change', renderScriptsLibrary);
+        document.getElementById('scriptsLibraryGrid').addEventListener('click', (e) => {
+          const btn = e.target.closest('.lib-action-btn');
+          if (!btn) return;
+          const id = btn.dataset.id;
+          const action = btn.dataset.action;
+
+          if (action === 'load') {
+            loadScriptIntoEditor(id);
+          } else if (action === 'schedule') {
+            const scr = state.scripts.find((s) => s.id === id);
+            if (!scr) return;
+            const best = getTopRecommendedSlots(scr.niche, 1)[0];
+            openPostModal({
+              title: scr.title,
+              niche: scr.niche,
+              scriptId: scr.id,
+              date: best ? best.date : formatDateISO(new Date()),
+              time: best ? best.time : '19:00',
+              trendScore: best ? best.score : null,
+            });
+          } else if (action === 'delete') {
+            const scr = state.scripts.find((s) => s.id === id);
+            openConfirmModal(
+              'Delete Script',
+              `Are you sure you want to delete "${scr?.title || 'this script'}"? This cannot be undone.`,
+              () => {
+                state.scripts = state.scripts.filter((s) => s.id !== id);
+                if (state.editingScriptId === id) resetEditor();
+                saveState();
+                renderScriptsLibrary();
+                showToast('Script deleted.', 'rose');
+              }
+            );
+          }
+        });
+
+        // Calendar Navigation & Trend Analyzer
+        document.getElementById('trendNicheSelect').addEventListener('change', (e) => {
+          state.config.trendNiche = e.target.value;
+          saveState();
+          renderRecommendedSlots();
+          renderHeatmap();
+        });
+        document.getElementById('trendTimezoneSelect').addEventListener('change', (e) => {
+          state.config.timezone = e.target.value;
+          saveState();
+          renderRecommendedSlots();
+        });
+        document.getElementById('suggestBestSlotBtn').addEventListener('click', () => {
+          renderRecommendedSlots();
+          renderHeatmap();
+          showToast('Trend slots refreshed against your calendar!', 'cyan');
+        });
+
+        // "Use This Slot" button click delegation
+        document.getElementById('recommendedSlotsGrid').addEventListener('click', (e) => {
+          const btn = e.target.closest('.use-slot-btn');
+          if (!btn) return;
+          openPostModal({
+            date: btn.dataset.date,
+            time: btn.dataset.time,
+            niche: btn.dataset.niche,
+            trendScore: Number(btn.dataset.score),
+          });
+        });
+
+        // Month Controls
+        document.getElementById('calPrevBtn').addEventListener('click', () => {
+          state.calendarDate = new Date(state.calendarDate.getFullYear(), state.calendarDate.getMonth() - 1, 1);
+          renderCalendar();
+        });
+        document.getElementById('calNextBtn').addEventListener('click', () => {
+          state.calendarDate = new Date(state.calendarDate.getFullYear(), state.calendarDate.getMonth() + 1, 1);
+          renderCalendar();
+        });
+        document.getElementById('calTodayBtn').addEventListener('click', () => {
+          state.calendarDate = new Date();
+          renderCalendar();
+        });
+        document.getElementById('openNewPostModalBtn').addEventListener('click', () => {
+          const niche = document.getElementById('trendNicheSelect').value;
+          const best = getTopRecommendedSlots(niche, 1)[0];
+          openPostModal({
+            date: best ? best.date : formatDateISO(new Date()),
+            time: best ? best.time : '19:00',
+            niche,
+            trendScore: best ? best.score : null,
+          });
+        });
+
+        // Calendar Grid Day / Post Chip Clicks
+        document.getElementById('calendarGrid').addEventListener('click', (e) => {
+          const postChip = e.target.closest('.cal-post-chip');
+          if (postChip) {
+            e.stopPropagation();
+            openPostModal({ postId: postChip.dataset.postId });
+            return;
+          }
+          const dayCell = e.target.closest('.calendar-day-cell');
+          if (dayCell && dayCell.dataset.date) {
+            const niche = document.getElementById('trendNicheSelect').value;
+            const best = getBestTimeForSpecificDate(dayCell.dataset.date, niche);
+            openPostModal({
+              date: dayCell.dataset.date,
+              time: best.time,
+              niche,
+              trendScore: best.score,
+            });
+          }
+        });
+
+        // Upcoming Queue Clicks
+        document.getElementById('upcomingQueueList').addEventListener('click', (e) => {
+          const card = e.target.closest('.queue-item-card');
+          if (card && card.dataset.postId) {
+            openPostModal({ postId: card.dataset.postId });
+          }
+        });
+
+        // Post Modal Events
+        document.getElementById('closePostModalBtn').addEventListener('click', closePostModal);
+        document.getElementById('cancelPostModalBtn').addEventListener('click', closePostModal);
+        document.getElementById('postModalForm').addEventListener('submit', handleSavePostModal);
+
+        document.getElementById('modalScriptSelect').addEventListener('change', (e) => {
+          const scr = state.scripts.find((s) => s.id === e.target.value);
+          if (scr) {
+            document.getElementById('modalPostTitle').value = scr.title;
+            document.getElementById('modalPostNiche').value = scr.niche;
+          }
+        });
+
+        document.getElementById('autoPickDayTimeBtn').addEventListener('click', () => {
+          const dateVal = document.getElementById('modalPostDate').value;
+          const nicheVal = document.getElementById('modalPostNiche').value;
+          if (!dateVal) return showToast('Select a date first.', 'rose');
+          const best = getBestTimeForSpecificDate(dateVal, nicheVal);
+          document.getElementById('modalPostTime').value = best.time;
+          const badge = document.getElementById('modalTrendScoreBadge');
+          badge.textContent = `${best.score}% Trend Match (${best.slotLabel})`;
+          badge.classList.remove('hidden');
+          showToast(`Auto-picked ${formatTime12h(best.time)} (${best.score}% match)!`, 'cyan');
+        });
+
+        document.getElementById('deletePostModalBtn').addEventListener('click', () => {
+          const id = document.getElementById('modalPostId').value;
+          if (!id) return;
+          openConfirmModal('Delete Scheduled Post', 'Remove this post from your publishing calendar?', () => {
+            state.posts = state.posts.filter((p) => p.id !== id);
+            saveState();
+            closePostModal();
+            renderCalendar();
+            renderRecommendedSlots();
+            renderUpcomingQueue();
+            showToast('Post removed from calendar.', 'rose');
+          });
+        });
+
+        // Confirmation Modal
+        document.getElementById('confirmCancelBtn').addEventListener('click', closeConfirmModal);
+        document.getElementById('confirmProceedBtn').addEventListener('click', () => {
+          if (typeof state.pendingConfirmAction === 'function') {
+            state.pendingConfirmAction();
+          }
+          closeConfirmModal();
+        });
+
+        // Setup Tab Actions
+        document.getElementById('saveEndpointBtn').addEventListener('click', () => {
+          const val = document.getElementById('setupEndpointInput').value.trim() || '/api/generate-script';
+          state.config.apiEndpoint = val;
+          saveState();
+          updateModeUI();
+          showToast('API endpoint saved.', 'cyan');
+        });
+        document.getElementById('testConnectionBtn').addEventListener('click', handleTestConnection);
+        document.getElementById('copyEnvVarBtn').addEventListener('click', () => {
+          copyToClipboard('ANTHROPIC_API_KEY', 'Copied ANTHROPIC_API_KEY!');
+        });
+        document.getElementById('copyServerlessCodeBtn').addEventListener('click', () => {
+          const code = document.getElementById('serverlessCodeSnippet').textContent;
+          copyToClipboard(code, 'Vercel serverless snippet copied!');
+        });
+      }
+
+      // =========================================================================
+      // 12. BOOTSTRAP
+      // =========================================================================
+      function init() {
+        loadState();
+        bindEvents();
+
+        // Restore saved preferences
+        document.getElementById('trendNicheSelect').value = state.config.trendNiche || 'Photography & BTS';
+        document.getElementById('trendTimezoneSelect').value = state.config.timezone || 'LOCAL';
+        document.getElementById('setupEndpointInput').value = state.config.apiEndpoint || '/api/generate-script';
+
+        updateModeUI();
+        updateSidebarStats();
+        renderScriptsLibrary();
+
+        // Load first sample script into editor so workspace feels immediately alive
+        if (state.scripts.length > 0) {
+          loadScriptIntoEditor(state.scripts[0].id);
+        }
+
+        switchView('studio');
+      }
+
+      window.addEventListener('DOMContentLoaded', init);
+    })();
+  </script>
+</body>
+</html>
