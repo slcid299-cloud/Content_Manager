@@ -1,0 +1,2721 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TikTok Studio OS — Claude.ai Account Bridge &amp; Publishing Suite</title>
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            obsidian: '#09090B',
+            card: '#121216',
+            elevated: '#18181E',
+            borderSubtle: '#27272A',
+            tiktokCyan: '#25F4EE',
+            tiktokRose: '#FE2C55',
+            claudeAmber: '#F59E0B',
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Lucide Icons via CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      background-color: #09090B;
+      color: #FAFAFA;
+      font-family: 'Inter', system-ui, sans-serif;
+      overflow-x: hidden;
+    }
+    /* Custom dark scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #09090B;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #27272A;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3F3F46;
+    }
+    /* Native date & time picker icons in dark mode */
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="time"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.85);
+      cursor: pointer;
+    }
+    /* Subtle studio glows */
+    .glow-amber {
+      box-shadow: 0 0 24px -6px rgba(245, 158, 11, 0.42);
+    }
+    .glow-cyan {
+      box-shadow: 0 0 22px -6px rgba(37, 244, 238, 0.35);
+    }
+    .glow-rose {
+      box-shadow: 0 0 22px -6px rgba(254, 44, 85, 0.38);
+    }
+    /* View fade-in */
+    .view-panel {
+      animation: panelFadeIn 0.18s ease-out;
+    }
+    @keyframes panelFadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    /* Teleprompter mirror mode */
+    .teleprompter-mirrored {
+      transform: scaleX(-1);
+    }
+  </style>
+</head>
+<body class="bg-obsidian text-zinc-100 antialiased min-h-screen flex flex-col lg:flex-row selection:bg-tiktokCyan/20 selection:text-tiktokCyan">
+
+  <!-- ==================== MOBILE TOP HEADER ==================== -->
+  <header class="lg:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 bg-card/95 backdrop-blur border-b border-borderSubtle">
+    <div class="flex items-center gap-2.5">
+      <div class="w-8 h-8 rounded-xl bg-elevated border border-borderSubtle flex items-center justify-center relative overflow-hidden">
+        <span class="w-2.5 h-2.5 rounded-full bg-tiktokCyan absolute -top-0.5 -left-0.5 blur-[2px] opacity-85"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-tiktokRose absolute -bottom-0.5 -right-0.5 blur-[2px] opacity-85"></span>
+        <svg class="w-4 h-4 text-white relative z-10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+        </svg>
+      </div>
+      <div>
+        <span class="font-semibold text-sm tracking-tight text-white">TikTok Studio OS</span>
+      </div>
+    </div>
+    <button id="mobileMenuBtn" type="button" class="p-2.5 rounded-xl bg-elevated border border-borderSubtle text-zinc-300 hover:text-white transition" aria-label="Open menu">
+      <i data-lucide="menu" class="w-5 h-5"></i>
+    </button>
+  </header>
+
+  <!-- Mobile Drawer Overlay -->
+  <div id="mobileOverlay" class="fixed inset-0 bg-black/75 backdrop-blur-xs z-40 hidden lg:hidden"></div>
+
+  <!-- ==================== SIDEBAR NAVIGATION ==================== -->
+  <aside id="sidebar" class="fixed lg:sticky top-0 left-0 z-50 h-screen w-64 bg-card border-r border-borderSubtle flex flex-col justify-between transform -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-out shrink-0">
+    <div class="p-5">
+      <!-- Brand Identity -->
+      <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-elevated border border-borderSubtle flex items-center justify-center relative overflow-hidden">
+            <span class="w-3 h-3 rounded-full bg-tiktokCyan absolute -top-1 -left-1 blur-[3px] opacity-85"></span>
+            <span class="w-3 h-3 rounded-full bg-tiktokRose absolute -bottom-1 -right-1 blur-[3px] opacity-85"></span>
+            <svg class="w-4 h-4 text-white relative z-10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+            </svg>
+          </div>
+          <div>
+            <h1 class="font-semibold text-sm tracking-tight text-white leading-tight">TikTok Studio OS</h1>
+            <p class="text-[11px] text-zinc-500 font-medium">Claude.ai Bridge Edition</p>
+          </div>
+        </div>
+        <button id="closeMobileMenuBtn" type="button" class="lg:hidden p-1.5 rounded-lg text-zinc-400 hover:text-white" aria-label="Close menu">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- 3 Main Navigation Tabs -->
+      <nav class="space-y-1.5" aria-label="Primary Workspace Navigation">
+        <p class="px-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-2">Creator Studio</p>
+
+        <button type="button" data-view="studio" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left">
+          <i data-lucide="sparkles" class="w-4 h-4 shrink-0"></i>
+          <span>Script Studio</span>
+        </button>
+
+        <button type="button" data-view="calendar" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left">
+          <i data-lucide="calendar" class="w-4 h-4 shrink-0"></i>
+          <span>Publishing Calendar</span>
+        </button>
+
+        <button type="button" data-view="deploy" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left">
+          <i data-lucide="rocket" class="w-4 h-4 shrink-0"></i>
+          <span>GitHub &amp; Vercel Deploy</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Sidebar Footer Telemetry -->
+    <div class="p-4 border-t border-borderSubtle space-y-3">
+      <div class="grid grid-cols-2 gap-2">
+        <div class="bg-elevated/80 border border-borderSubtle rounded-xl p-2.5">
+          <p class="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Scripts</p>
+          <p id="statScriptsCount" class="text-lg font-semibold text-white mt-0.5">0</p>
+        </div>
+        <div class="bg-elevated/80 border border-borderSubtle rounded-xl p-2.5">
+          <p class="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">Queued</p>
+          <p id="statPostsCount" class="text-lg font-semibold text-tiktokCyan mt-0.5">0</p>
+        </div>
+      </div>
+
+      <a href="https://claude.ai/new" target="_blank" rel="noopener noreferrer"
+        class="w-full bg-claudeAmber/10 hover:bg-claudeAmber/20 border border-claudeAmber/30 rounded-xl px-3 py-2.5 flex items-center justify-between transition group">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="w-2 h-2 rounded-full bg-claudeAmber shrink-0"></span>
+          <span class="text-xs text-amber-200 font-medium truncate">Claude.ai Bridge</span>
+        </div>
+        <i data-lucide="external-link" class="w-3.5 h-3.5 text-claudeAmber group-hover:translate-x-0.5 transition-transform"></i>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ==================== MAIN CONTENT CONTAINER ==================== -->
+  <main class="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto w-full">
+
+    <!-- =======================================================================
+         TAB 1: SCRIPT STUDIO (CLAUDE.AI ACCOUNT BRIDGE)
+    ======================================================================= -->
+    <section id="view-studio" class="view-panel space-y-6">
+      <!-- Page Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2.5">
+            <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-white">Script Studio</h2>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-claudeAmber/15 border border-claudeAmber/35 text-amber-300">
+              <span class="w-1.5 h-1.5 rounded-full bg-claudeAmber"></span>
+              Claude.ai Account Bridge
+            </span>
+          </div>
+          <p class="text-sm text-zinc-400 mt-1">Engineer your XML TikTok brief, launch your signed-in Claude.ai account in 1 click, and paste back your script.</p>
+        </div>
+
+        <button id="newScriptResetBtn" type="button" class="self-start sm:self-auto px-3.5 py-2 rounded-xl text-xs font-medium bg-card hover:bg-elevated border border-borderSubtle text-zinc-300 hover:text-white flex items-center gap-1.5 transition">
+          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+          <span>New Blank Script</span>
+        </button>
+      </div>
+
+      <!-- Live Bridge Status Banner (Appears when prompt is copied / Claude.ai launched) -->
+      <div id="bridgeStatusBanner" class="hidden rounded-2xl bg-gradient-to-r from-claudeAmber/15 via-card to-tiktokCyan/10 border border-claudeAmber/40 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-xl bg-claudeAmber/20 border border-claudeAmber/40 flex items-center justify-center shrink-0 mt-0.5">
+            <i data-lucide="sparkles" class="w-4 h-4 text-claudeAmber"></i>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-white">XML Prompt Copied &amp; Claude.ai Ready!</p>
+            <p id="bridgeStatusText" class="text-xs text-zinc-300 mt-0.5 leading-relaxed">
+              1. Switch to your open <strong class="text-amber-300">Claude.ai</strong> tab and press <kbd class="px-1.5 py-0.5 rounded bg-obsidian border border-borderSubtle font-mono text-[11px]">Cmd/Ctrl + V</kbd> &rarr; <kbd class="px-1.5 py-0.5 rounded bg-obsidian border border-borderSubtle font-mono text-[11px]">Enter</kbd>.<br />
+              2. Copy Claude's script reply, return here, and click <strong class="text-tiktokCyan">"Paste Script from Clipboard"</strong> on the right.
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+          <button type="button" id="bannerPasteNowBtn" class="px-3.5 py-2 rounded-xl bg-tiktokCyan/15 hover:bg-tiktokCyan/25 border border-tiktokCyan/40 text-tiktokCyan text-xs font-semibold flex items-center gap-1.5 transition">
+            <i data-lucide="clipboard-paste" class="w-3.5 h-3.5"></i>
+            <span>Paste Reply Now</span>
+          </button>
+          <button type="button" id="dismissBridgeBannerBtn" class="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-elevated transition" aria-label="Dismiss guide">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- 2-Column Studio Grid -->
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+
+        <!-- LEFT COLUMN: 1. Build TikTok Brief (5 cols) -->
+        <div class="xl:col-span-5 bg-card border border-borderSubtle rounded-2xl p-5 sm:p-6 space-y-5">
+          <div class="flex items-center justify-between border-b border-borderSubtle pb-4">
+            <div class="flex items-center gap-2">
+              <span class="w-5 h-5 rounded-md bg-claudeAmber/15 border border-claudeAmber/35 text-claudeAmber text-xs font-bold flex items-center justify-center">1</span>
+              <h3 class="text-sm font-semibold text-white">Build TikTok Brief</h3>
+            </div>
+            <span class="text-[11px] font-mono text-zinc-500">Zero API Cost</span>
+          </div>
+
+          <div class="space-y-4">
+            <!-- Video Topic / Core Idea -->
+            <div>
+              <label for="inputTopic" class="block text-xs font-medium text-zinc-300 mb-1.5">Video Topic / Core Idea <span class="text-tiktokRose">*</span></label>
+              <input id="inputTopic" type="text" placeholder="e.g., 3 AI workflow tricks that save 6 hours every week"
+                class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-claudeAmber transition" />
+            </div>
+
+            <!-- Niche & Hook Style -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label for="inputNiche" class="block text-xs font-medium text-zinc-300 mb-1.5">Content Niche</label>
+                <select id="inputNiche" class="w-full px-3 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white focus:outline-none focus:border-claudeAmber transition">
+                  <option value="Tech & AI">Tech &amp; AI</option>
+                  <option value="Lifestyle & Vlogs">Lifestyle &amp; Vlogs</option>
+                  <option value="Business & Finance">Business &amp; Finance</option>
+                  <option value="Fitness & Health">Fitness &amp; Health</option>
+                  <option value="Comedy & Skits">Comedy &amp; Skits</option>
+                  <option value="Beauty & Fashion">Beauty &amp; Fashion</option>
+                  <option value="Creative & Photography">Creative &amp; Photography</option>
+                  <option value="Education & Study">Education &amp; Study</option>
+                </select>
+              </div>
+              <div>
+                <label for="inputHookStyle" class="block text-xs font-medium text-zinc-300 mb-1.5">Hook Style</label>
+                <select id="inputHookStyle" class="w-full px-3 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white focus:outline-none focus:border-claudeAmber transition">
+                  <option value="Curiosity Gap">Curiosity Gap</option>
+                  <option value="Contrarian Take">Contrarian Take</option>
+                  <option value="Pattern Interrupt">Pattern Interrupt</option>
+                  <option value="Storytime / POV">Storytime / POV</option>
+                  <option value="Fast Listicle">Fast Listicle</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Target Duration (15s, 30s, 45s, 60s, 90s) -->
+            <div>
+              <label class="block text-xs font-medium text-zinc-300 mb-1.5">Target Duration</label>
+              <div class="grid grid-cols-5 gap-2" id="durationSelector">
+                <button type="button" data-duration="15s" class="duration-btn py-2 rounded-xl text-xs font-medium border border-borderSubtle bg-obsidian text-zinc-400 hover:text-white transition">15s</button>
+                <button type="button" data-duration="30s" class="duration-btn py-2 rounded-xl text-xs font-medium border border-claudeAmber bg-claudeAmber/15 text-amber-300 transition">30s</button>
+                <button type="button" data-duration="45s" class="duration-btn py-2 rounded-xl text-xs font-medium border border-borderSubtle bg-obsidian text-zinc-400 hover:text-white transition">45s</button>
+                <button type="button" data-duration="60s" class="duration-btn py-2 rounded-xl text-xs font-medium border border-borderSubtle bg-obsidian text-zinc-400 hover:text-white transition">60s</button>
+                <button type="button" data-duration="90s" class="duration-btn py-2 rounded-xl text-xs font-medium border border-borderSubtle bg-obsidian text-zinc-400 hover:text-white transition">90s</button>
+              </div>
+            </div>
+
+            <!-- Tone -->
+            <div>
+              <label for="inputTone" class="block text-xs font-medium text-zinc-300 mb-1.5">Tone &amp; Delivery</label>
+              <select id="inputTone" class="w-full px-3 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white focus:outline-none focus:border-claudeAmber transition">
+                <option value="Energetic & Fast">Energetic &amp; Fast</option>
+                <option value="Calm & Aesthetic">Calm &amp; Aesthetic</option>
+                <option value="Educational & Crisp">Educational &amp; Crisp</option>
+                <option value="Raw & Relatable">Raw &amp; Relatable</option>
+              </select>
+            </div>
+
+            <!-- Key Talking Points / CTA -->
+            <div>
+              <label for="inputDetails" class="block text-xs font-medium text-zinc-300 mb-1.5">Key Talking Points / CTA</label>
+              <textarea id="inputDetails" rows="4" placeholder="Add specific bullet points, tools/products to mention, personal story beats, or your desired comment/follow CTA..."
+                class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-claudeAmber transition resize-y"></textarea>
+            </div>
+
+            <!-- Primary CTA: Copy Prompt & Open Claude.ai -->
+            <button type="button" id="copyAndOpenClaudeBtn" class="w-full py-3.5 px-4 rounded-xl bg-claudeAmber hover:bg-amber-400 text-obsidian font-semibold text-sm flex items-center justify-center gap-2 transition glow-amber cursor-pointer">
+              <i data-lucide="sparkles" class="w-4 h-4"></i>
+              <span>Copy Prompt &amp; Open Claude.ai</span>
+              <i data-lucide="external-link" class="w-3.5 h-3.5 opacity-80"></i>
+            </button>
+
+            <!-- Secondary Actions Row -->
+            <div class="grid grid-cols-2 gap-2.5">
+              <button type="button" id="copyPromptOnlyBtn" class="py-2.5 px-3 rounded-xl bg-elevated hover:bg-zinc-800 border border-borderSubtle text-xs font-medium text-zinc-200 flex items-center justify-center gap-1.5 transition">
+                <i data-lucide="copy" class="w-3.5 h-3.5 text-zinc-400"></i>
+                <span>Copy Prompt Only</span>
+              </button>
+              <button type="button" id="togglePromptDrawerBtn" class="py-2.5 px-3 rounded-xl bg-elevated hover:bg-zinc-800 border border-borderSubtle text-xs font-medium text-zinc-200 flex items-center justify-center gap-1.5 transition">
+                <span>View Engineered Prompt</span>
+                <i id="promptDrawerChevron" data-lucide="chevron-down" class="w-3.5 h-3.5 text-zinc-400 transition-transform"></i>
+              </button>
+            </div>
+
+            <!-- Collapsible Engineered XML Prompt Drawer -->
+            <div id="engineeredPromptDrawer" class="hidden rounded-xl bg-obsidian border border-borderSubtle p-3.5 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-mono text-claudeAmber font-medium">XML Prompt Preview (Live Synced)</span>
+                <span class="text-[10px] text-zinc-500">Optimized for Claude</span>
+              </div>
+              <pre id="engineeredPromptPreview" class="text-[11px] font-mono text-zinc-400 whitespace-pre-wrap leading-relaxed max-h-56 overflow-y-auto"></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: 2. Claude Script Workspace (7 cols) -->
+        <div class="xl:col-span-7 bg-card border border-borderSubtle rounded-2xl p-5 sm:p-6 flex flex-col space-y-4">
+          <!-- Workspace Header + Toolbar -->
+          <div class="flex flex-col gap-3.5 border-b border-borderSubtle pb-4">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="w-5 h-5 rounded-md bg-tiktokCyan/15 border border-tiktokCyan/35 text-tiktokCyan text-xs font-bold flex items-center justify-center">2</span>
+                <h3 class="text-sm font-semibold text-white">Claude Script Workspace</h3>
+              </div>
+
+              <!-- Workspace Toolbar -->
+              <div class="flex flex-wrap items-center gap-2">
+                <button type="button" id="pasteClipboardBtn" class="px-3 py-1.5 rounded-xl bg-tiktokCyan/15 hover:bg-tiktokCyan/25 border border-tiktokCyan/40 text-tiktokCyan text-xs font-semibold flex items-center gap-1.5 transition">
+                  <i data-lucide="clipboard-paste" class="w-3.5 h-3.5"></i>
+                  <span>Paste Script from Clipboard</span>
+                </button>
+                <button type="button" id="openTeleprompterBtn" class="px-3 py-1.5 rounded-xl bg-elevated hover:bg-zinc-800 border border-borderSubtle text-xs font-medium text-zinc-200 flex items-center gap-1.5 transition" title="Open Teleprompter Recording View">
+                  <i data-lucide="monitor-play" class="w-3.5 h-3.5 text-tiktokRose"></i>
+                  <span>Teleprompter Mode</span>
+                </button>
+                <button type="button" id="copyScriptBtn" class="p-2 rounded-xl bg-elevated hover:bg-zinc-800 border border-borderSubtle text-zinc-300 hover:text-white transition" title="Copy Script">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                </button>
+                <button type="button" id="toolbarSaveBtn" class="p-2 rounded-xl bg-elevated hover:bg-zinc-800 border border-borderSubtle text-zinc-300 hover:text-tiktokCyan transition" title="Save to Library">
+                  <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Editable Title & Status Row -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div class="flex-1 min-w-0">
+                <input id="editorScriptTitle" type="text" placeholder="Enter script title..."
+                  class="w-full bg-transparent text-base sm:text-lg font-semibold text-white placeholder-zinc-600 focus:outline-none truncate" />
+                <div class="flex flex-wrap items-center gap-2 mt-1 text-xs text-zinc-500">
+                  <span id="editorMetaNiche" class="px-2 py-0.5 rounded-md bg-elevated border border-borderSubtle text-zinc-300">Tech &amp; AI</span>
+                  <span id="editorMetaDuration" class="font-mono text-amber-300">Target: 30s</span>
+                </div>
+              </div>
+
+              <select id="editorScriptStatus" class="self-start sm:self-auto px-3 py-1.5 rounded-xl bg-obsidian border border-borderSubtle text-xs font-medium text-zinc-200 focus:outline-none focus:border-tiktokCyan">
+                <option value="Idea">Idea</option>
+                <option value="Scripted" selected>Scripted</option>
+                <option value="Filmed">Filmed</option>
+                <option value="Scheduled">Scheduled</option>
+                <option value="Posted">Posted</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Rich Editable Script Textarea -->
+          <div class="relative flex-1">
+            <textarea id="scriptOutputEditor" rows="16" placeholder="Paste your generated Claude script here (or click 'Paste Script from Clipboard' above)...&#10;&#10;Tip: Use [B-ROLL] and [ON-SCREEN TEXT] brackets for production cues — the Teleprompter and WPM timer automatically account for them!"
+              class="w-full min-h-[360px] p-4 rounded-xl bg-obsidian border border-borderSubtle text-sm leading-relaxed text-zinc-200 font-mono placeholder-zinc-600 focus:outline-none focus:border-tiktokCyan/70 transition resize-y"></textarea>
+          </div>
+
+          <!-- Live Stats Bar: Word Count, Estimated Spoken Seconds (~145 WPM vs Target), Hook Check -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 bg-obsidian border border-borderSubtle rounded-xl p-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-lg bg-elevated border border-borderSubtle flex items-center justify-center text-zinc-400 shrink-0">
+                <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+              </div>
+              <div>
+                <p class="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">Word Count</p>
+                <p id="statWordCount" class="text-xs font-mono font-semibold text-white">0 words</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-lg bg-elevated border border-borderSubtle flex items-center justify-center text-tiktokCyan shrink-0">
+                <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+              </div>
+              <div>
+                <p class="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">Spoken Pace (~145 WPM)</p>
+                <p id="statSpokenPacing" class="text-xs font-mono font-semibold text-zinc-200">0s / 30s target</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2.5">
+              <div id="hookCheckIconWrap" class="w-7 h-7 rounded-lg bg-elevated border border-borderSubtle flex items-center justify-center text-zinc-400 shrink-0">
+                <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+              </div>
+              <div>
+                <p class="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">0–3s Hook Check</p>
+                <p id="statHookCheck" class="text-xs font-semibold text-zinc-400">Waiting for script</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Footer -->
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+            <button type="button" id="saveScriptBtn" class="px-4 py-2.5 rounded-xl bg-elevated hover:bg-zinc-800 border border-borderSubtle text-xs font-semibold text-white flex items-center gap-2 transition">
+              <i data-lucide="save" class="w-4 h-4 text-tiktokCyan"></i>
+              <span id="saveScriptBtnText">Save Draft</span>
+            </button>
+
+            <button type="button" id="scheduleWithTrendBtn" class="px-4 py-2.5 rounded-xl bg-tiktokRose hover:bg-[#e52349] text-white text-xs font-semibold flex items-center gap-2 transition glow-rose">
+              <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+              <span>Schedule with Trend Engine</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTTOM SECTION: SAVED SCRIPTS LIBRARY -->
+      <div class="bg-card border border-borderSubtle rounded-2xl p-5 sm:p-6 space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div>
+            <h3 class="text-base font-semibold text-white">Saved Scripts Library</h3>
+            <p class="text-xs text-zinc-400">All scripts are saved locally in your browser. Load into the editor or schedule directly to your calendar.</p>
+          </div>
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <div class="relative">
+              <i data-lucide="search" class="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+              <input id="librarySearchInput" type="text" placeholder="Search title, niche, or text..."
+                class="w-full sm:w-60 pl-9 pr-3 py-2 rounded-xl bg-obsidian border border-borderSubtle text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-tiktokCyan" />
+            </div>
+            <select id="libraryStatusFilter" class="px-3 py-2 rounded-xl bg-obsidian border border-borderSubtle text-xs text-zinc-300 focus:outline-none focus:border-tiktokCyan">
+              <option value="ALL">All Statuses</option>
+              <option value="Idea">Idea</option>
+              <option value="Scripted">Scripted</option>
+              <option value="Filmed">Filmed</option>
+              <option value="Scheduled">Scheduled</option>
+              <option value="Posted">Posted</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="scriptsLibraryGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <!-- Dynamically rendered -->
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         TAB 2: PUBLISHING CALENDAR & TREND ENGINE
+    ======================================================================= -->
+    <section id="view-calendar" class="view-panel hidden space-y-6">
+      <!-- Top Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-white">Publishing Calendar &amp; Trend Engine</h2>
+          <p class="text-sm text-zinc-400 mt-0.5">Analyze niche audience velocity and schedule your TikToks in uncrowded peak slots.</p>
+        </div>
+        <button id="openNewPostModalBtn" type="button" class="self-start sm:self-auto px-4 py-2.5 rounded-xl bg-tiktokRose hover:bg-[#e52349] text-white text-xs font-semibold flex items-center gap-2 transition glow-rose">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          <span>New Scheduled Post</span>
+        </button>
+      </div>
+
+      <!-- TOP ROW: TREND-BASED DATE & TIME ANALYZER -->
+      <div class="bg-card border border-borderSubtle rounded-2xl p-5 sm:p-6 space-y-5">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="flex items-start gap-3">
+            <div class="w-9 h-9 rounded-xl bg-tiktokCyan/15 border border-tiktokCyan/35 flex items-center justify-center shrink-0">
+              <i data-lucide="trending-up" class="w-5 h-5 text-tiktokCyan"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-white">Trend-Based Date &amp; Time Analyzer</h3>
+              <p class="text-xs text-zinc-400 mt-0.5">Calculates top 3 upcoming slots by niche behavior, day-of-week velocity, and avoiding already-booked days.</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5">
+            <select id="trendNicheSelect" class="px-3.5 py-2 rounded-xl bg-obsidian border border-borderSubtle text-xs font-medium text-white focus:outline-none focus:border-tiktokCyan">
+              <option value="Tech & AI">Tech &amp; AI</option>
+              <option value="Lifestyle & Vlogs">Lifestyle &amp; Vlogs</option>
+              <option value="Business & Finance">Business &amp; Finance</option>
+              <option value="Fitness & Health">Fitness &amp; Health</option>
+              <option value="Comedy & Skits">Comedy &amp; Skits</option>
+              <option value="Beauty & Fashion">Beauty &amp; Fashion</option>
+              <option value="Creative & Photography">Creative &amp; Photography</option>
+              <option value="Education & Study">Education &amp; Study</option>
+            </select>
+
+            <button id="analyzeBestSlotsBtn" type="button" class="px-4 py-2 rounded-xl bg-tiktokCyan/15 hover:bg-tiktokCyan/25 border border-tiktokCyan/40 text-tiktokCyan text-xs font-semibold flex items-center gap-1.5 transition glow-cyan">
+              <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+              <span>Analyze Best Slots</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Top 3 Recommended Slots Cards -->
+        <div id="recommendedSlotsGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Interactive Weekly Engagement Heatmap -->
+        <div class="pt-4 border-t border-borderSubtle space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h4 class="text-xs font-semibold text-white">Weekly Niche Engagement Heatmap</h4>
+              <p id="heatmapSubtitle" class="text-[11px] text-zinc-400">Audience activity velocity across 4 daily posting windows (click any block to schedule)</p>
+            </div>
+            <div class="flex items-center gap-1.5 text-[10px] text-zinc-400">
+              <span>Low</span>
+              <span class="w-3 h-3 rounded bg-elevated border border-borderSubtle"></span>
+              <span class="w-3 h-3 rounded bg-tiktokCyan/25 border border-tiktokCyan/20"></span>
+              <span class="w-3 h-3 rounded bg-tiktokCyan/60 border border-tiktokCyan/50"></span>
+              <span class="w-3 h-3 rounded bg-tiktokCyan border border-tiktokCyan"></span>
+              <span>Peak</span>
+            </div>
+          </div>
+
+          <div id="weeklyHeatmapGrid" class="overflow-x-auto">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN AREA: INTERACTIVE MONTHLY CALENDAR + UPCOMING QUEUE -->
+      <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+
+        <!-- Interactive Monthly Calendar (8 cols) -->
+        <div class="xl:col-span-8 bg-card border border-borderSubtle rounded-2xl p-4 sm:p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <h3 id="calendarMonthLabel" class="text-base sm:text-lg font-semibold text-white tracking-tight">November 2026</h3>
+            <div class="flex items-center gap-1.5">
+              <button id="calPrevBtn" type="button" class="p-2 rounded-xl bg-obsidian hover:bg-elevated border border-borderSubtle text-zinc-300 hover:text-white transition" aria-label="Previous Month">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+              </button>
+              <button id="calTodayBtn" type="button" class="px-3 py-1.5 rounded-xl bg-obsidian hover:bg-elevated border border-borderSubtle text-xs font-medium text-zinc-300 hover:text-white transition">
+                Today
+              </button>
+              <button id="calNextBtn" type="button" class="p-2 rounded-xl bg-obsidian hover:bg-elevated border border-borderSubtle text-zinc-300 hover:text-white transition" aria-label="Next Month">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Weekday Headers -->
+          <div class="grid grid-cols-7 gap-1 sm:gap-2 text-center">
+            <div class="text-[11px] font-semibold text-zinc-500 uppercase py-1">Mon</div>
+            <div class="text-[11px] font-semibold text-zinc-500 uppercase py-1">Tue</div>
+            <div class="text-[11px] font-semibold text-zinc-500 uppercase py-1">Wed</div>
+            <div class="text-[11px] font-semibold text-zinc-500 uppercase py-1">Thu</div>
+            <div class="text-[11px] font-semibold text-zinc-500 uppercase py-1">Fri</div>
+            <div class="text-[11px] font-semibold text-zinc-500 uppercase py-1">Sat</div>
+            <div class="text-[11px] font-semibold text-zinc-500 uppercase py-1">Sun</div>
+          </div>
+
+          <!-- Days Grid -->
+          <div id="calendarGrid" class="grid grid-cols-7 gap-1 sm:gap-2">
+            <!-- Populated dynamically -->
+          </div>
+
+          <!-- Color-coded Status Legend -->
+          <div class="flex flex-wrap items-center gap-4 pt-2 border-t border-borderSubtle text-[11px] text-zinc-400">
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-zinc-400"></span> Idea</span>
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-claudeAmber"></span> Scripted</span>
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-400"></span> Filmed</span>
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-tiktokCyan"></span> Scheduled</span>
+            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> Posted</span>
+          </div>
+        </div>
+
+        <!-- Upcoming Scheduled Posts Side Panel (4 cols) -->
+        <div class="xl:col-span-4 bg-card border border-borderSubtle rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-sm font-semibold text-white">Upcoming Queue</h3>
+              <p class="text-[11px] text-zinc-400 mt-0.5">Click status pill to advance pipeline</p>
+            </div>
+            <span id="upcomingQueueCount" class="text-[11px] font-mono text-zinc-400 bg-obsidian px-2.5 py-1 rounded-lg border border-borderSubtle">0 posts</span>
+          </div>
+
+          <div id="upcomingQueueList" class="space-y-3 max-h-[540px] overflow-y-auto pr-1">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================================================================
+         TAB 3: GITHUB & VERCEL DEPLOY (STATIC READY) + JSON BACKUP
+    ======================================================================= -->
+    <section id="view-deploy" class="view-panel hidden space-y-6">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-white">GitHub &amp; Vercel Deploy</h2>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/15 border border-emerald-500/35 text-emerald-300">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            Static Ready • Zero Backend
+          </span>
+        </div>
+        <p class="text-sm text-zinc-400 mt-1">Host your creator command center for free on Vercel with zero API keys, zero serverless functions, and zero monthly billing.</p>
+      </div>
+
+      <!-- Architecture Highlight Banner -->
+      <div class="bg-card border border-borderSubtle rounded-2xl p-5 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div class="flex items-start gap-3.5">
+          <div class="w-10 h-10 rounded-xl bg-claudeAmber/15 border border-claudeAmber/35 flex items-center justify-center shrink-0">
+            <i data-lucide="shield-check" class="w-5 h-5 text-claudeAmber"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-white">100% Client-Side Claude.ai Account Bridge</h3>
+            <p class="text-xs text-zinc-400 mt-1 leading-relaxed max-w-2xl">
+              Because TikTok Studio OS bridges directly to your signed-in <strong class="text-zinc-200">claude.ai</strong> browser session and stores your workspace in <code class="font-mono text-tiktokCyan bg-obsidian px-1.5 py-0.5 rounded border border-borderSubtle">localStorage</code>, deploying via GitHub &rarr; Vercel requires <strong class="text-white">zero environment variables</strong>, <strong class="text-white">zero backend code</strong>, and <strong class="text-white">zero API billing</strong>.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- 3-Step Visual Deployment Checklist (7 cols) -->
+        <div class="lg:col-span-7 bg-card border border-borderSubtle rounded-2xl p-5 sm:p-6 space-y-5">
+          <div class="flex items-center justify-between border-b border-borderSubtle pb-4">
+            <h3 class="text-sm font-semibold text-white">3-Step Static Deployment Checklist</h3>
+            <span class="text-[11px] font-mono text-zinc-500">~60 seconds</span>
+          </div>
+
+          <div class="space-y-4">
+            <!-- Step 1 -->
+            <div class="bg-obsidian border border-borderSubtle rounded-xl p-4 flex items-start gap-3.5">
+              <div class="w-8 h-8 rounded-lg bg-elevated border border-borderSubtle text-tiktokCyan font-mono text-xs font-bold flex items-center justify-center shrink-0">01</div>
+              <div class="space-y-1 flex-1">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="git-branch" class="w-4 h-4 text-zinc-400"></i>
+                  <h4 class="text-sm font-semibold text-white">Push <code class="font-mono text-tiktokCyan">index.html</code> to your GitHub Repository</h4>
+                </div>
+                <p class="text-xs text-zinc-400 leading-relaxed">
+                  Create a new GitHub repository (public or private) and commit this single <code class="font-mono text-zinc-200">index.html</code> file into the root folder. No <code class="font-mono text-zinc-300">package.json</code> or build folder is required.
+                </p>
+              </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="bg-obsidian border border-borderSubtle rounded-xl p-4 flex items-start gap-3.5">
+              <div class="w-8 h-8 rounded-lg bg-elevated border border-borderSubtle text-claudeAmber font-mono text-xs font-bold flex items-center justify-center shrink-0">02</div>
+              <div class="space-y-1 flex-1">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="layers" class="w-4 h-4 text-zinc-400"></i>
+                  <h4 class="text-sm font-semibold text-white">Import Repo in Vercel (Framework Preset: Other)</h4>
+                </div>
+                <p class="text-xs text-zinc-400 leading-relaxed">
+                  Open <strong class="text-zinc-200">vercel.com/new</strong>, select your GitHub repository, keep <strong class="text-amber-300">Framework Preset: Other</strong>, leave Build Command empty, and skip Environment Variables completely.
+                </p>
+              </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="bg-obsidian border border-borderSubtle rounded-xl p-4 flex items-start gap-3.5">
+              <div class="w-8 h-8 rounded-lg bg-elevated border border-borderSubtle text-emerald-400 font-mono text-xs font-bold flex items-center justify-center shrink-0">03</div>
+              <div class="space-y-1 flex-1">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="globe" class="w-4 h-4 text-zinc-400"></i>
+                  <h4 class="text-sm font-semibold text-white">Click Deploy — Instant Global Edge Live URL</h4>
+                </div>
+                <p class="text-xs text-zinc-400 leading-relaxed">
+                  Vercel serves your static <code class="font-mono text-zinc-200">index.html</code> from its global CDN in seconds. Bookmark your <code class="font-mono text-zinc-300">.vercel.app</code> domain on desktop and mobile!
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data Portability Card: JSON Export / Import (5 cols) -->
+        <div class="lg:col-span-5 bg-card border border-borderSubtle rounded-2xl p-5 sm:p-6 flex flex-col justify-between space-y-5">
+          <div class="space-y-4">
+            <div class="border-b border-borderSubtle pb-4">
+              <h3 class="text-sm font-semibold text-white">Workspace Data Portability</h3>
+              <p class="text-xs text-zinc-400 mt-0.5">Transfer your saved scripts and calendar schedule between desktop, phone, or browsers anytime.</p>
+            </div>
+
+            <!-- Current Storage Summary -->
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-obsidian border border-borderSubtle rounded-xl p-3">
+                <p class="text-[11px] text-zinc-500">Saved Scripts</p>
+                <p id="deployScriptsCount" class="text-xl font-semibold text-white mt-0.5">0</p>
+              </div>
+              <div class="bg-obsidian border border-borderSubtle rounded-xl p-3">
+                <p class="text-[11px] text-zinc-500">Calendar Posts</p>
+                <p id="deployPostsCount" class="text-xl font-semibold text-tiktokCyan mt-0.5">0</p>
+              </div>
+            </div>
+
+            <!-- Export Button -->
+            <button type="button" id="exportJsonBtn" class="w-full py-3 px-4 rounded-xl bg-tiktokCyan/15 hover:bg-tiktokCyan/25 border border-tiktokCyan/40 text-tiktokCyan text-xs font-semibold flex items-center justify-center gap-2 transition glow-cyan">
+              <i data-lucide="download" class="w-4 h-4"></i>
+              <span>Export Workspace Backup (.json)</span>
+            </button>
+
+            <!-- Import Button + Hidden File Input -->
+            <input type="file" id="importJsonFileInput" accept=".json,application/json" class="hidden" />
+            <button type="button" id="importJsonBtn" class="w-full py-3 px-4 rounded-xl bg-elevated hover:bg-zinc-800 border border-borderSubtle text-zinc-200 text-xs font-semibold flex items-center justify-center gap-2 transition">
+              <i data-lucide="upload" class="w-4 h-4 text-claudeAmber"></i>
+              <span>Import Backup (.json)</span>
+            </button>
+          </div>
+
+          <p class="text-[11px] text-zinc-500 leading-relaxed border-t border-borderSubtle pt-3">
+            Tip: Export a <code class="font-mono text-zinc-400">.json</code> snapshot before clearing browser cache or when moving from localhost to your live Vercel URL.
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =========================================================================
+       MODAL 1: TELEPROMPTER RECORDING VIEW
+  ========================================================================= -->
+  <div id="teleprompterModal" class="fixed inset-0 z-[60] hidden flex-col bg-obsidian">
+    <!-- Top Studio Control Bar -->
+    <div class="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-3.5 bg-card border-b border-borderSubtle">
+      <div class="flex items-center gap-3 min-w-0">
+        <span class="w-2.5 h-2.5 rounded-full bg-tiktokRose animate-pulse shrink-0"></span>
+        <h3 id="teleprompterTitle" class="text-sm font-semibold text-white truncate">Teleprompter Mode</h3>
+      </div>
+
+      <!-- Controls -->
+      <div class="flex flex-wrap items-center gap-3 sm:gap-4">
+        <!-- Play / Pause -->
+        <button type="button" id="tpPlayPauseBtn" class="px-3.5 py-2 rounded-xl bg-tiktokCyan text-obsidian text-xs font-bold flex items-center gap-1.5 transition">
+          <i id="tpPlayIcon" data-lucide="play" class="w-3.5 h-3.5"></i>
+          <span id="tpPlayLabel">Start Scroll</span>
+        </button>
+
+        <!-- Reset -->
+        <button type="button" id="tpResetBtn" class="p-2 rounded-xl bg-elevated hover:bg-zinc-800 border border-borderSubtle text-zinc-300 hover:text-white transition" title="Scroll to top">
+          <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+        </button>
+
+        <!-- Speed Slider -->
+        <label class="flex items-center gap-2 text-xs text-zinc-400">
+          <span>Speed</span>
+          <input id="tpSpeedInput" type="range" min="1" max="10" value="3" class="w-20 accent-[#25F4EE] cursor-pointer" />
+          <span id="tpSpeedVal" class="font-mono text-zinc-200 w-4">3</span>
+        </label>
+
+        <!-- Font Size Slider -->
+        <label class="flex items-center gap-2 text-xs text-zinc-400">
+          <span>Size</span>
+          <input id="tpSizeInput" type="range" min="24" max="64" value="38" class="w-20 accent-[#F59E0B] cursor-pointer" />
+          <span id="tpSizeVal" class="font-mono text-zinc-200 w-8">38px</span>
+        </label>
+
+        <!-- Mirror Toggle -->
+        <button type="button" id="tpMirrorBtn" class="px-3 py-2 rounded-xl bg-elevated hover:bg-zinc-800 border border-borderSubtle text-xs font-medium text-zinc-300 flex items-center gap-1.5 transition" title="Mirror text for beam-splitter glass">
+          <i data-lucide="flip-horizontal" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">Mirror</span>
+        </button>
+
+        <!-- Close -->
+        <button type="button" id="closeTeleprompterBtn" class="px-3 py-2 rounded-xl bg-tiktokRose/15 hover:bg-tiktokRose/25 border border-tiktokRose/40 text-tiktokRose text-xs font-semibold flex items-center gap-1.5 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+          <span>Exit</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Eye-line Guide Marker -->
+    <div class="relative flex-1 overflow-hidden">
+      <div class="pointer-events-none absolute inset-x-0 top-1/3 border-t border-dashed border-tiktokRose/40 flex items-center justify-between px-4">
+        <span class="text-[10px] font-mono uppercase tracking-wider text-tiktokRose bg-obsidian px-2 py-0.5 rounded">Eye Line</span>
+        <span class="text-[10px] font-mono uppercase tracking-wider text-tiktokRose bg-obsidian px-2 py-0.5 rounded">Eye Line</span>
+      </div>
+
+      <!-- Scrollable Script Canvas -->
+      <div id="teleprompterScrollArea" class="h-full overflow-y-auto px-6 sm:px-16 md:px-28 py-[30vh]">
+        <div id="teleprompterText" class="max-w-4xl mx-auto font-sans font-semibold text-white leading-snug whitespace-pre-wrap transition-transform" style="font-size: 38px;">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 2: ADD / EDIT SCHEDULED TIKTOK POST
+  ========================================================================= -->
+  <div id="postModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
+    <div class="bg-card border border-borderSubtle rounded-2xl w-full max-w-lg p-5 sm:p-6 space-y-5 shadow-2xl max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-borderSubtle pb-3.5">
+        <div>
+          <h3 id="postModalTitle" class="text-base font-semibold text-white">Schedule TikTok Post</h3>
+          <p class="text-xs text-zinc-400 mt-0.5">Link a script, pick a peak trend window, and track production status.</p>
+        </div>
+        <button id="closePostModalBtn" type="button" class="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-elevated transition" aria-label="Close modal">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="postModalForm" class="space-y-4">
+        <input type="hidden" id="modalPostId" />
+
+        <!-- Link Saved Script -->
+        <div>
+          <label for="modalScriptSelect" class="block text-xs font-medium text-zinc-300 mb-1.5">Linked Saved Script</label>
+          <select id="modalScriptSelect" class="w-full px-3 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white focus:outline-none focus:border-tiktokCyan">
+            <option value="">— Standalone post (no linked script) —</option>
+          </select>
+        </div>
+
+        <!-- Post Title -->
+        <div>
+          <label for="modalPostTitle" class="block text-xs font-medium text-zinc-300 mb-1.5">Post Title <span class="text-tiktokRose">*</span></label>
+          <input id="modalPostTitle" type="text" required placeholder="e.g., 3 AI Prompts Every Creator Needs"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-tiktokCyan" />
+        </div>
+
+        <!-- Niche & Status -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label for="modalPostNiche" class="block text-xs font-medium text-zinc-300 mb-1.5">Niche</label>
+            <select id="modalPostNiche" class="w-full px-3 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white focus:outline-none focus:border-tiktokCyan">
+              <option value="Tech & AI">Tech &amp; AI</option>
+              <option value="Lifestyle & Vlogs">Lifestyle &amp; Vlogs</option>
+              <option value="Business & Finance">Business &amp; Finance</option>
+              <option value="Fitness & Health">Fitness &amp; Health</option>
+              <option value="Comedy & Skits">Comedy &amp; Skits</option>
+              <option value="Beauty & Fashion">Beauty &amp; Fashion</option>
+              <option value="Creative & Photography">Creative &amp; Photography</option>
+              <option value="Education & Study">Education &amp; Study</option>
+            </select>
+          </div>
+          <div>
+            <label for="modalPostStatus" class="block text-xs font-medium text-zinc-300 mb-1.5">Production Status</label>
+            <select id="modalPostStatus" class="w-full px-3 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white focus:outline-none focus:border-tiktokCyan">
+              <option value="Idea">Idea</option>
+              <option value="Scripted">Scripted</option>
+              <option value="Filmed">Filmed</option>
+              <option value="Scheduled" selected>Scheduled</option>
+              <option value="Posted">Posted</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Date & Time + Auto-Pick Trend Button -->
+        <div class="space-y-2">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label for="modalPostDate" class="block text-xs font-medium text-zinc-300 mb-1.5">Publish Date <span class="text-tiktokRose">*</span></label>
+              <input id="modalPostDate" type="date" required
+                class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white focus:outline-none focus:border-tiktokCyan" />
+            </div>
+            <div>
+              <label for="modalPostTime" class="block text-xs font-medium text-zinc-300 mb-1.5">Publish Time <span class="text-tiktokRose">*</span></label>
+              <input id="modalPostTime" type="time" required
+                class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white focus:outline-none focus:border-tiktokCyan" />
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <button type="button" id="autoPickDayTimeBtn" class="text-xs font-medium text-tiktokCyan hover:underline flex items-center gap-1.5">
+              <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+              <span>Auto-Pick Best Trend Time for This Day</span>
+            </button>
+            <span id="modalTrendScoreBadge" class="hidden text-[11px] font-mono px-2 py-0.5 rounded-md bg-tiktokCyan/15 text-tiktokCyan border border-tiktokCyan/30"></span>
+          </div>
+        </div>
+
+        <!-- Hook / Notes -->
+        <div>
+          <label for="modalPostNotes" class="block text-xs font-medium text-zinc-300 mb-1.5">Hook / Production Notes</label>
+          <textarea id="modalPostNotes" rows="2" placeholder="Opening hook reminder, trending audio name, props, or cover text..."
+            class="w-full px-3.5 py-2 rounded-xl bg-obsidian border border-borderSubtle text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-tiktokCyan resize-none"></textarea>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="flex items-center justify-between pt-2 border-t border-borderSubtle">
+          <button type="button" id="deletePostModalBtn" class="hidden px-3.5 py-2 rounded-xl bg-tiktokRose/10 hover:bg-tiktokRose/20 border border-tiktokRose/30 text-tiktokRose text-xs font-medium transition">
+            Delete Post
+          </button>
+          <div class="flex items-center gap-2 ml-auto">
+            <button type="button" id="cancelPostModalBtn" class="px-4 py-2 rounded-xl bg-elevated hover:bg-zinc-800 border border-borderSubtle text-xs font-medium text-zinc-300 transition">
+              Cancel
+            </button>
+            <button type="submit" class="px-5 py-2 rounded-xl bg-tiktokRose hover:bg-[#e52349] text-white text-xs font-semibold transition">
+              Save Post
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL 3: CUSTOM CONFIRMATION DIALOG (ZERO BROWSER CONFIRM/ALERT)
+  ========================================================================= -->
+  <div id="confirmModal" class="fixed inset-0 z-[70] hidden items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
+    <div class="bg-card border border-borderSubtle rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
+      <div class="space-y-1.5">
+        <h3 id="confirmModalTitle" class="text-base font-semibold text-white">Confirm Action</h3>
+        <p id="confirmModalMsg" class="text-xs text-zinc-400 leading-relaxed">Are you sure you want to proceed?</p>
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button id="confirmCancelBtn" type="button" class="px-3.5 py-2 rounded-xl bg-elevated hover:bg-zinc-800 border border-borderSubtle text-xs font-medium text-zinc-300 transition">Cancel</button>
+        <button id="confirmProceedBtn" type="button" class="px-4 py-2 rounded-xl bg-tiktokRose hover:bg-[#e52349] text-white text-xs font-semibold transition">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TOAST NOTIFICATION CONTAINER ==================== -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-[80] flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- ==================== APPLICATION LOGIC ==================== -->
+  <script>
+    (function () {
+      'use strict';
+
+      // =========================================================================
+      // 1. CONSTANTS & APPLICATION STATE
+      // =========================================================================
+      const STORAGE_KEYS = {
+        SCRIPTS: 'tiktok_studio_os_bridge_scripts_v2',
+        POSTS: 'tiktok_studio_os_bridge_posts_v2',
+        PREFS: 'tiktok_studio_os_bridge_prefs_v2',
+      };
+
+      const STATUS_PIPELINE = ['Idea', 'Scripted', 'Filmed', 'Scheduled', 'Posted'];
+
+      const state = {
+        activeView: 'studio',
+        scripts: [],
+        posts: [],
+        prefs: {
+          selectedNiche: 'Tech & AI',
+        },
+        editingScriptId: null,
+        selectedDuration: '30s',
+        calendarDate: new Date(),
+        pendingConfirmAction: null,
+        // Teleprompter state
+        tpPlaying: false,
+        tpRafId: null,
+        tpScrollPos: 0,
+        tpMirrored: false,
+      };
+
+      // =========================================================================
+      // 2. NICHE TREND ENGINE MATRIX
+      // Days: 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
+      // Windows: 0=Morning (8:30 AM), 1=Afternoon (1:00 PM), 2=Evening (7:30 PM), 3=Late Night (9:45 PM)
+      // =========================================================================
+      const NICHE_TRENDS = {
+        'Tech & AI': {
+          matrix: [
+            [62, 84, 88, 66],
+            [68, 94, 96, 72],
+            [65, 91, 93, 70],
+            [64, 92, 95, 74],
+            [58, 82, 84, 65],
+            [50, 74, 78, 68],
+            [56, 80, 90, 76],
+          ],
+          times: ['08:30', '12:30', '19:30', '21:30'],
+          insight: 'Builders & AI enthusiasts save workflow breakdowns heavily during Tue–Thu lunch breaks and 7:30 PM evening scrolls.',
+        },
+        'Lifestyle & Vlogs': {
+          matrix: [
+            [54, 68, 82, 74],
+            [58, 72, 92, 80],
+            [56, 70, 86, 78],
+            [60, 76, 95, 84],
+            [58, 74, 88, 82],
+            [66, 84, 90, 85],
+            [70, 88, 97, 86],
+          ],
+          times: ['09:00', '13:15', '19:45', '21:45'],
+          insight: 'Day-in-the-life & aesthetic vlogs achieve maximum completion rates on Thu and Sun evenings.',
+        },
+        'Business & Finance': {
+          matrix: [
+            [72, 88, 84, 52],
+            [76, 96, 92, 58],
+            [74, 95, 90, 56],
+            [72, 93, 88, 55],
+            [66, 85, 76, 48],
+            [48, 64, 68, 45],
+            [55, 72, 84, 60],
+          ],
+          times: ['08:00', '12:15', '18:30', '21:00'],
+          insight: 'Founders & professionals engage sharpest around 12:15 PM lunch and 6:30 PM commute wind-downs Tue–Thu.',
+        },
+        'Fitness & Health': {
+          matrix: [
+            [84, 74, 88, 56],
+            [86, 76, 94, 60],
+            [82, 75, 91, 58],
+            [85, 78, 93, 62],
+            [78, 72, 80, 52],
+            [88, 82, 78, 54],
+            [80, 76, 90, 64],
+          ],
+          times: ['07:15', '12:30', '18:15', '20:45'],
+          insight: 'Workout routines & nutrition tips spike during morning gym prep (7:15 AM) and post-work training windows.',
+        },
+        'Comedy & Skits': {
+          matrix: [
+            [52, 74, 84, 82],
+            [54, 76, 86, 84],
+            [56, 78, 88, 86],
+            [58, 80, 91, 89],
+            [62, 88, 96, 97],
+            [68, 92, 95, 98],
+            [66, 90, 94, 92],
+          ],
+          times: ['09:30', '13:30', '19:30', '22:15'],
+          insight: 'Share velocity for skits & trending audio explodes on Fri–Sat nights between 7:30 PM and 10:30 PM.',
+        },
+        'Beauty & Fashion': {
+          matrix: [
+            [52, 70, 84, 68],
+            [58, 76, 96, 78],
+            [55, 74, 88, 74],
+            [60, 80, 97, 82],
+            [64, 82, 91, 79],
+            [70, 88, 92, 80],
+            [68, 86, 95, 76],
+          ],
+          times: ['09:00', '13:00', '19:30', '21:30'],
+          insight: 'GRWM, styling, and product reviews hit peak saves on Tue, Thu, and Sun evenings.',
+        },
+        'Creative & Photography': {
+          matrix: [
+            [48, 68, 80, 62],
+            [52, 74, 86, 68],
+            [56, 80, 95, 74],
+            [54, 76, 88, 70],
+            [60, 84, 96, 80],
+            [66, 90, 94, 82],
+            [62, 82, 91, 74],
+          ],
+          times: ['08:45', '12:45', '19:15', '21:30'],
+          insight: 'Visual BTS, color grading & camera hacks peak Wed/Fri/Sat when creators plan weekend shoots.',
+        },
+        'Education & Study': {
+          matrix: [
+            [64, 84, 86, 62],
+            [68, 93, 95, 68],
+            [66, 95, 96, 70],
+            [65, 92, 94, 66],
+            [58, 82, 80, 56],
+            [52, 74, 76, 58],
+            [60, 82, 90, 68],
+          ],
+          times: ['08:15', '12:30', '19:00', '21:15'],
+          insight: 'Study hacks & micro-lessons see highest bookmark rates during midday breaks and Sun–Thu evening study hours.',
+        },
+      };
+
+      const SLOT_WINDOW_NAMES = ['Morning', 'Afternoon', 'Evening', 'Late Night'];
+      const DAY_SHORT_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+      // =========================================================================
+      // 3. UTILITIES & ICON HELPER
+      // =========================================================================
+      function refreshIcons() {
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+          window.lucide.createIcons();
+        }
+      }
+
+      function generateId(prefix = 'id') {
+        return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      }
+
+      function formatDateISO(dateObj) {
+        const y = dateObj.getFullYear();
+        const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const d = String(dateObj.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+
+      function parseISODate(isoStr) {
+        const [y, m, d] = isoStr.split('-').map(Number);
+        return new Date(y, m - 1, d);
+      }
+
+      function formatDisplayDate(isoStr) {
+        const d = parseISODate(isoStr);
+        return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      }
+
+      function formatTime12h(time24) {
+        if (!time24) return '';
+        const [hStr, mStr] = time24.split(':');
+        let h = parseInt(hStr, 10);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        return `${h}:${mStr} ${ampm}`;
+      }
+
+      function getMondayIndex(dateObj) {
+        return (dateObj.getDay() + 6) % 7;
+      }
+
+      function escapeHtml(str) {
+        return String(str || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      // Clipboard Write with Async API + execCommand Fallback (works in iframes & Vercel)
+      async function copyTextSafe(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+          try {
+            await navigator.clipboard.writeText(text);
+            return true;
+          } catch (_) {
+            // Fall through to execCommand fallback
+          }
+        }
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed';
+          ta.style.top = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          const ok = document.execCommand('copy');
+          document.body.removeChild(ta);
+          return ok;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function showToast(message, tone = 'cyan') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        const borderMap = {
+          cyan: 'border-tiktokCyan/50',
+          amber: 'border-claudeAmber/50',
+          rose: 'border-tiktokRose/50',
+          emerald: 'border-emerald-500/50',
+        };
+        const dotMap = {
+          cyan: 'bg-tiktokCyan',
+          amber: 'bg-claudeAmber',
+          rose: 'bg-tiktokRose',
+          emerald: 'bg-emerald-400',
+        };
+        toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl bg-card/95 backdrop-blur border ${borderMap[tone] || borderMap.cyan} shadow-2xl text-xs font-medium text-white transition-all duration-300 translate-y-2 opacity-0`;
+        toast.innerHTML = `<span class="w-2 h-2 rounded-full ${dotMap[tone] || dotMap.cyan} shrink-0"></span><span class="flex-1">${escapeHtml(message)}</span>`;
+        container.appendChild(toast);
+
+        requestAnimationFrame(() => toast.classList.remove('translate-y-2', 'opacity-0'));
+        setTimeout(() => {
+          toast.classList.add('translate-y-2', 'opacity-0');
+          setTimeout(() => toast.remove(), 300);
+        }, 3400);
+      }
+
+      function openConfirmModal(title, msg, onConfirm) {
+        document.getElementById('confirmModalTitle').textContent = title;
+        document.getElementById('confirmModalMsg').textContent = msg;
+        state.pendingConfirmAction = onConfirm;
+        const modal = document.getElementById('confirmModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+
+      function closeConfirmModal() {
+        const modal = document.getElementById('confirmModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        state.pendingConfirmAction = null;
+      }
+
+      // =========================================================================
+      // 4. LOCALSTORAGE PERSISTENCE & REALISTIC STARTER DATA
+      // =========================================================================
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEYS.SCRIPTS, JSON.stringify(state.scripts));
+          localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(state.posts));
+          localStorage.setItem(STORAGE_KEYS.PREFS, JSON.stringify(state.prefs));
+        } catch (err) {
+          console.error('Failed to persist state:', err);
+        }
+        updateCountsUI();
+      }
+
+      function loadState() {
+        try {
+          const rawPrefs = JSON.parse(localStorage.getItem(STORAGE_KEYS.PREFS));
+          if (rawPrefs) state.prefs = { ...state.prefs, ...rawPrefs };
+
+          const rawScripts = JSON.parse(localStorage.getItem(STORAGE_KEYS.SCRIPTS));
+          const rawPosts = JSON.parse(localStorage.getItem(STORAGE_KEYS.POSTS));
+
+          // Pre-populate realistic starter scripts & 3 upcoming scheduled posts ONLY if localStorage is empty
+          if (rawScripts === null && rawPosts === null) {
+            state.scripts = createStarterScripts();
+            state.posts = createStarterPosts(state.scripts);
+            saveState();
+          } else {
+            state.scripts = Array.isArray(rawScripts) ? rawScripts : [];
+            state.posts = Array.isArray(rawPosts) ? rawPosts : [];
+          }
+        } catch (err) {
+          console.error('Error loading localStorage:', err);
+          state.scripts = createStarterScripts();
+          state.posts = createStarterPosts(state.scripts);
+        }
+        updateCountsUI();
+      }
+
+      function createStarterScripts() {
+        const now = new Date().toISOString();
+        return [
+          {
+            id: 'scr_starter_1',
+            title: '3 Claude XML Prompt Tricks That 10x Output Quality',
+            niche: 'Tech & AI',
+            duration: '30s',
+            hookStyle: 'Curiosity Gap',
+            tone: 'Energetic & Fast',
+            status: 'Scheduled',
+            createdAt: now,
+            updatedAt: now,
+            content: `[0:00 - 0:03] 0–3s HOOK (VISUAL + VERBAL)
+[VISUAL CUE]: Fast zoom into laptop screen showing messy prompt turning into clean XML tags.
+[ON-SCREEN TEXT]: "STOP PROMPTING CLAUDE LIKE CHATGPT ❌"
+[SPOKEN HOOK]: "If you're typing normal paragraphs into Claude, you're leaving 80% of its IQ on the table—use these three XML tags instead."
+
+[0:03 - 0:11] BEAT 1 — <context> Tag
+[B-ROLL]: Screen capture typing <context> and </context> around raw notes.
+[ON-SCREEN TEXT]: "1. WRAP YOUR BACKGROUND IN <context>"
+"First, wrap your background info inside context tags so Claude never confuses your raw notes with your actual instructions."
+
+[0:11 - 0:20] BEAT 2 — <example> Tag
+[B-ROLL]: Highlighting a sample output block with a crisp whoosh transition.
+[ON-SCREEN TEXT]: "2. FEED ONE <example>"
+"Second, paste one winning example inside example tags. Claude mirrors your exact rhythm and formatting automatically."
+
+[0:20 - 0:26] BEAT 3 — <constraints> Tag
+[CAMERA CUE]: Cut back to direct-to-camera medium close-up.
+[ON-SCREEN TEXT]: "3. LOCK RULES IN <constraints>"
+"Third, put your word count and banned buzzwords inside constraints tags so you get clean copy on the first try."
+
+[0:26 - 0:30] CALL TO ACTION
+[ON-SCREEN TEXT]: "SAVE THIS FOR YOUR NEXT PROMPT 📌"
+"Save this video before your next session—and comment 'XML' if you want my copy-paste prompt template."
+
+CAPTION & HASHTAGS:
+Claude responds dramatically better when you structure your brief with XML tags. Save this cheat sheet for your workflow! ⚡🤖
+#claudai #aitools #promptengineering #techcreator #productivityhacks`,
+          },
+          {
+            id: 'scr_starter_2',
+            title: 'How I Batch Film 7 TikToks in 90 Minutes on Sunday',
+            niche: 'Creative & Photography',
+            duration: '45s',
+            hookStyle: 'Pattern Interrupt',
+            tone: 'Calm & Aesthetic',
+            status: 'Filmed',
+            createdAt: now,
+            updatedAt: now,
+            content: `[0:00 - 0:03] 0–3s HOOK (VISUAL + VERBAL)
+[VISUAL CUE]: Overhead desk drop — notebook, key light click on, tripod lock in 3 rhythmic cuts.
+[ON-SCREEN TEXT]: "7 TIKTOKS IN 90 MINUTES (MY SUNDAY SYSTEM)"
+[SPOKEN HOOK]: "Here is the exact 90-minute Sunday batching system that keeps my TikTok posted all week without daily burnout."
+
+[0:03 - 0:15] BEAT 1 — 25 Mins: Hook-First Scripting
+[B-ROLL]: Close-up writing 7 opening lines in a dark notebook with warm coffee beside it.
+[ON-SCREEN TEXT]: "MIN 0–25: WRITE 7 HOOKS FIRST"
+"First 25 minutes: I only write the 3-second hooks and three bullet points per video. No full paragraphs—just clean talking beats."
+
+[0:15 - 0:30] BEAT 2 — 40 Mins: A-Roll + Shirt Swap
+[B-ROLL]: Timelapse changing lighting angle and swapping jacket between takes.
+[ON-SCREEN TEXT]: "MIN 25–65: FILM ALL A-ROLL IN ONE SETUP"
+"Next 40 minutes: I lock my camera and key light once, record all seven talking-head takes back to back, and swap tops every two videos."
+
+[0:30 - 0:40] BEAT 3 — 25 Mins: B-Roll & Sound Bank
+[B-ROLL]: Shooting tight detail inserts of hands typing, lens adjustments, and desk setup.
+[ON-SCREEN TEXT]: "MIN 65–90: CAPTURE 15 B-ROLL CLIPS"
+"Final 25 minutes: I shoot 15 silent B-roll clips so editing takes ten minutes per post."
+
+[0:40 - 0:45] CALL TO ACTION
+[ON-SCREEN TEXT]: "FOLLOW FOR MORE CREATOR SYSTEMS 🎬"
+"Follow for more creator workflows—and tell me in the comments how many videos you batch at once."
+
+CAPTION & HASHTAGS:
+Consistency gets way easier when you separate scripting, filming, and editing into blocks. 🎥✨
+#contentcreator #creatorworkflow #behindthescenes #tiktokstrategy #batchcreating`,
+          },
+          {
+            id: 'scr_starter_3',
+            title: 'Why Cheap Coffee Shops Make You 2x More Productive',
+            niche: 'Lifestyle & Vlogs',
+            duration: '30s',
+            hookStyle: 'Contrarian Take',
+            tone: 'Raw & Relatable',
+            status: 'Idea',
+            createdAt: now,
+            updatedAt: now,
+            content: `[0:00 - 0:03] 0–3s HOOK (VISUAL + VERBAL)
+[VISUAL CUE]: Walking past a quiet home desk straight out the front door with laptop in hand.
+[ON-SCREEN TEXT]: "STOP WORKING FROM YOUR BEDROOM DESK"
+[SPOKEN HOOK]: "Unpopular opinion: working from a noisy corner cafe makes you twice as productive as a silent home office."
+
+[0:03 - 0:14] BEAT 1 — Stochastic Resonance
+[B-ROLL]: Aesthetic pour-over coffee shot + ambient cafe chatter.
+[ON-SCREEN TEXT]: "70dB AMBIENT NOISE = PEAK FOCUS"
+"Psychologists call it stochastic resonance—gentle background chatter around 70 decibels gives your brain just enough stimulation to stop doomscrolling."
+
+[0:14 - 0:24] BEAT 2 — The Battery Timer Constraint
+[B-ROLL]: Laptop battery icon at 65% while typing rapidly.
+[ON-SCREEN TEXT]: "NO CHARGER = BUILT-IN DEADLINE"
+"Plus, when you leave your charger at home, your laptop battery becomes a built-in deadline that forces deep focus."
+
+[0:24 - 0:30] CALL TO ACTION
+[ON-SCREEN TEXT]: "TEAM CAFE OR TEAM HOME OFFICE? 👇"
+"Are you team noisy cafe or team silent home desk? Drop your pick in the comments."
+
+CAPTION & HASHTAGS:
+Sometimes changing your environment is the fastest productivity hack. ☕💻
+#dayinmylife #productivitytips #workfromcafe #aestheticvlog #creatorroutine`,
+          },
+        ];
+      }
+
+      function createStarterPosts(scripts) {
+        const today = new Date();
+        const addDays = (offset) => {
+          const d = new Date(today);
+          d.setDate(today.getDate() + offset);
+          return formatDateISO(d);
+        };
+
+        return [
+          {
+            id: 'post_starter_1',
+            title: scripts[0].title,
+            scriptId: scripts[0].id,
+            niche: 'Tech & AI',
+            date: addDays(1),
+            time: '19:30',
+            status: 'Scheduled',
+            trendScore: 96,
+            notes: 'Pin comment with XML template link immediately after upload.',
+          },
+          {
+            id: 'post_starter_2',
+            title: scripts[1].title,
+            scriptId: scripts[1].id,
+            niche: 'Creative & Photography',
+            date: addDays(3),
+            time: '19:15',
+            status: 'Filmed',
+            trendScore: 95,
+            notes: 'Add subtle lo-fi beat at 16% volume and auto-captions in safe zone.',
+          },
+          {
+            id: 'post_starter_3',
+            title: scripts[2].title,
+            scriptId: scripts[2].id,
+            niche: 'Lifestyle & Vlogs',
+            date: addDays(5),
+            time: '19:45',
+            status: 'Scripted',
+            trendScore: 94,
+            notes: 'Film morning cafe B-roll before 10 AM window light.',
+          },
+        ];
+      }
+
+      function updateCountsUI() {
+        const scriptsLen = state.scripts.length;
+        const queuedLen = state.posts.filter((p) => p.status !== 'Posted').length;
+        document.getElementById('statScriptsCount').textContent = scriptsLen;
+        document.getElementById('statPostsCount').textContent = queuedLen;
+
+        const depScripts = document.getElementById('deployScriptsCount');
+        const depPosts = document.getElementById('deployPostsCount');
+        if (depScripts) depScripts.textContent = scriptsLen;
+        if (depPosts) depPosts.textContent = state.posts.length;
+      }
+
+      // =========================================================================
+      // 5. NAVIGATION & SIDEBAR
+      // =========================================================================
+      function switchView(viewName) {
+        state.activeView = viewName;
+        document.querySelectorAll('.view-panel').forEach((p) => p.classList.add('hidden'));
+        const panel = document.getElementById(`view-${viewName}`);
+        if (panel) panel.classList.remove('hidden');
+
+        document.querySelectorAll('.nav-btn').forEach((btn) => {
+          const active = btn.dataset.view === viewName;
+          if (active) {
+            btn.className =
+              'nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left bg-elevated text-white border border-borderSubtle';
+          } else {
+            btn.className =
+              'nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left text-zinc-400 hover:text-white hover:bg-elevated/50 border border-transparent';
+          }
+        });
+
+        if (viewName === 'calendar') {
+          renderRecommendedSlots();
+          renderWeeklyHeatmap();
+          renderCalendar();
+          renderUpcomingQueue();
+        } else if (viewName === 'studio') {
+          renderScriptsLibrary();
+        } else if (viewName === 'deploy') {
+          updateCountsUI();
+        }
+
+        closeMobileSidebar();
+        refreshIcons();
+      }
+
+      function openMobileSidebar() {
+        document.getElementById('sidebar').classList.remove('-translate-x-full');
+        document.getElementById('mobileOverlay').classList.remove('hidden');
+      }
+
+      function closeMobileSidebar() {
+        document.getElementById('sidebar').classList.add('-translate-x-full');
+        document.getElementById('mobileOverlay').classList.add('hidden');
+      }
+
+      // =========================================================================
+      // 6. CLAUDE.AI ACCOUNT BRIDGE: XML PROMPT BUILDER & WORKSPACE
+      // =========================================================================
+      function buildXmlPrompt() {
+        const topic = document.getElementById('inputTopic').value.trim() || '[Enter your video topic]';
+        const niche = document.getElementById('inputNiche').value;
+        const duration = state.selectedDuration;
+        const hookStyle = document.getElementById('inputHookStyle').value;
+        const tone = document.getElementById('inputTone').value;
+        const details = document.getElementById('inputDetails').value.trim() || 'Use high-retention storytelling and a strong comment/save CTA.';
+
+        return `<tiktok_script_brief>
+  <topic>${topic}</topic>
+  <niche>${niche}</niche>
+  <target_duration>${duration}</target_duration>
+  <hook_style>${hookStyle}</hook_style>
+  <tone_and_delivery>${tone}</tone_and_delivery>
+  <key_talking_points_and_cta>${details}</key_talking_points_and_cta>
+</tiktok_script_brief>
+
+<instructions>
+You are an elite short-form TikTok creative director and audience retention strategist. Write a high-converting, ready-to-film TikTok script tailored to the brief above.
+
+Format your response cleanly with these exact sections:
+1. 0–3s HOOK (Visual + Verbal):
+   - [VISUAL CUE]: Exact camera framing, movement, or prop action in the first 2 seconds.
+   - [ON-SCREEN TEXT]: Short, punchy 3–6 word hook overlay.
+   - [SPOKEN HOOK]: Scroll-stopping opening line matching the requested Hook Style.
+
+2. RETENTION BODY (Timestamped Beats):
+   - Break the script into tight 3–5 second visual beats paced for ${duration} (~145 WPM spoken speed).
+   - Include [B-ROLL], [CAMERA CUE], and [ON-SCREEN TEXT] pattern interrupts every few seconds to prevent viewer drop-off.
+   - Write natural, conversational spoken lines ready to read on a teleprompter.
+
+3. CALL TO ACTION (CTA):
+   - High-engagement closing line driving comments, saves, or follows without sounding salesy.
+
+4. CAPTION & HASHTAGS:
+   - SEO-optimized TikTok caption + 4–5 targeted niche hashtags.
+</instructions>`;
+      }
+
+      function updateLivePromptPreview() {
+        const previewEl = document.getElementById('engineeredPromptPreview');
+        if (previewEl) {
+          previewEl.textContent = buildXmlPrompt();
+        }
+      }
+
+      async function handleCopyPromptAndOpenClaude() {
+        const topic = document.getElementById('inputTopic').value.trim();
+        if (!topic) {
+          showToast('Enter a Video Topic / Core Idea first so Claude knows what to write!', 'amber');
+          document.getElementById('inputTopic').focus();
+          return;
+        }
+
+        const xmlPrompt = buildXmlPrompt();
+        const copied = await copyTextSafe(xmlPrompt);
+
+        // Pre-fill title & niche in Workspace so it is ready when user pastes back
+        if (!document.getElementById('editorScriptTitle').value.trim()) {
+          document.getElementById('editorScriptTitle').value = topic;
+        }
+        document.getElementById('editorMetaNiche').textContent = document.getElementById('inputNiche').value;
+        document.getElementById('editorMetaDuration').textContent = `Target: ${state.selectedDuration}`;
+        updateScriptStats();
+
+        // Show Live Bridge Status Banner
+        const banner = document.getElementById('bridgeStatusBanner');
+        banner.classList.remove('hidden');
+
+        // Open user's signed-in claude.ai session in a new tab
+        window.open('https://claude.ai/new', '_blank', 'noopener,noreferrer');
+
+        if (copied) {
+          showToast('XML Prompt copied! Paste (Cmd/Ctrl+V) in your Claude.ai tab.', 'amber');
+        } else {
+          showToast('Opened Claude.ai — open "View Engineered Prompt" to copy manually.', 'amber');
+        }
+      }
+
+      async function handleCopyPromptOnly() {
+        const xmlPrompt = buildXmlPrompt();
+        const copied = await copyTextSafe(xmlPrompt);
+        document.getElementById('bridgeStatusBanner').classList.remove('hidden');
+        if (copied) {
+          showToast('Engineered XML prompt copied to clipboard!', 'amber');
+        } else {
+          showToast('Could not access clipboard automatically.', 'rose');
+        }
+      }
+
+      async function handlePasteFromClipboard() {
+        const editor = document.getElementById('scriptOutputEditor');
+        try {
+          if (navigator.clipboard && typeof navigator.clipboard.readText === 'function') {
+            const clipText = await navigator.clipboard.readText();
+            if (clipText && clipText.trim()) {
+              editor.value = clipText.trim();
+              updateScriptStats();
+              showToast('Claude script pasted into workspace!', 'cyan');
+              return;
+            } else {
+              showToast('Clipboard is empty — copy Claude’s reply first.', 'amber');
+              return;
+            }
+          }
+          throw new Error('Clipboard read API unavailable');
+        } catch (_) {
+          // Graceful fallback for restricted iframe or Firefox permissions
+          editor.focus();
+          editor.classList.add('ring-2', 'ring-tiktokCyan');
+          setTimeout(() => editor.classList.remove('ring-2', 'ring-tiktokCyan'), 2000);
+          showToast('Press Cmd/Ctrl + V inside the script box to paste your Claude reply!', 'cyan');
+        }
+      }
+
+      // Live Stats: Word Count, Estimated Spoken Seconds (~145 WPM vs Target), Hook Check
+      function updateScriptStats() {
+        const rawText = document.getElementById('scriptOutputEditor').value.trim();
+
+        // Strip bracketed stage cues like [B-ROLL] or [VISUAL CUE] for accurate spoken WPM calculation
+        const spokenOnly = rawText
+          .replace(/\[[^\]]+\]/g, ' ')
+          .replace(/CAPTION\s*&?\s*HASHTAGS[\s\S]*$/i, ' ')
+          .trim();
+
+        const totalWords = rawText ? rawText.split(/\s+/).length : 0;
+        const spokenWords = spokenOnly ? spokenOnly.split(/\s+/).length : 0;
+
+        // ~145 WPM = 2.416 words/second
+        const estSeconds = Math.round((spokenWords / 145) * 60);
+        const targetSec = parseInt(state.selectedDuration, 10) || 30;
+
+        document.getElementById('statWordCount').textContent = `${totalWords} word${totalWords === 1 ? '' : 's'}`;
+
+        const pacingEl = document.getElementById('statSpokenPacing');
+        pacingEl.textContent = `~${estSeconds}s / ${targetSec}s target`;
+
+        if (spokenWords === 0) {
+          pacingEl.className = 'text-xs font-mono font-semibold text-zinc-300';
+        } else if (estSeconds <= targetSec + 4 && estSeconds >= Math.max(8, targetSec - 10)) {
+          pacingEl.className = 'text-xs font-mono font-semibold text-tiktokCyan';
+        } else if (estSeconds > targetSec + 4) {
+          pacingEl.className = 'text-xs font-mono font-semibold text-tiktokRose';
+        } else {
+          pacingEl.className = 'text-xs font-mono font-semibold text-claudeAmber';
+        }
+
+        // Hook Check Indicator
+        const hookEl = document.getElementById('statHookCheck');
+        const hookWrap = document.getElementById('hookCheckIconWrap');
+
+        if (!rawText) {
+          hookEl.textContent = 'Waiting for script';
+          hookEl.className = 'text-xs font-semibold text-zinc-400';
+          hookWrap.className = 'w-7 h-7 rounded-lg bg-elevated border border-borderSubtle flex items-center justify-center text-zinc-400 shrink-0';
+        } else {
+          const hasHookMarker = /(0[–-]3s|SPOKEN HOOK|VISUAL CUE|HOOK)/i.test(rawText);
+          const firstSentence = spokenOnly.split(/[.!?]\s/)[0] || '';
+          const firstWords = firstSentence ? firstSentence.split(/\s+/).length : 0;
+
+          if (hasHookMarker || (firstWords > 0 && firstWords <= 24)) {
+            hookEl.textContent = hasHookMarker ? '0–3s Hook Structured' : `Punchy Opening (${firstWords}w)`;
+            hookEl.className = 'text-xs font-semibold text-emerald-400';
+            hookWrap.className = 'w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/35 flex items-center justify-center text-emerald-400 shrink-0';
+          } else {
+            hookEl.textContent = 'Trim opening (<18 words)';
+            hookEl.className = 'text-xs font-semibold text-claudeAmber';
+            hookWrap.className = 'w-7 h-7 rounded-lg bg-claudeAmber/15 border border-claudeAmber/35 flex items-center justify-center text-claudeAmber shrink-0';
+          }
+        }
+      }
+
+      function saveCurrentScript() {
+        const title = document.getElementById('editorScriptTitle').value.trim();
+        const content = document.getElementById('scriptOutputEditor').value.trim();
+        const status = document.getElementById('editorScriptStatus').value;
+        const niche = document.getElementById('editorMetaNiche').textContent || document.getElementById('inputNiche').value;
+        const duration = state.selectedDuration;
+
+        if (!title) {
+          showToast('Add a script title before saving.', 'rose');
+          document.getElementById('editorScriptTitle').focus();
+          return null;
+        }
+        if (!content) {
+          showToast('Script editor is empty.', 'rose');
+          return null;
+        }
+
+        const now = new Date().toISOString();
+        let savedObj = null;
+
+        if (state.editingScriptId) {
+          const idx = state.scripts.findIndex((s) => s.id === state.editingScriptId);
+          if (idx !== -1) {
+            state.scripts[idx] = {
+              ...state.scripts[idx],
+              title,
+              content,
+              status,
+              niche,
+              duration,
+              updatedAt: now,
+            };
+            savedObj = state.scripts[idx];
+            showToast('Script updated in library.', 'cyan');
+          }
+        }
+
+        if (!savedObj) {
+          savedObj = {
+            id: generateId('scr'),
+            title,
+            niche,
+            duration,
+            hookStyle: document.getElementById('inputHookStyle').value,
+            tone: document.getElementById('inputTone').value,
+            status,
+            content,
+            createdAt: now,
+            updatedAt: now,
+          };
+          state.scripts.unshift(savedObj);
+          state.editingScriptId = savedObj.id;
+          document.getElementById('saveScriptBtnText').textContent = 'Update Draft';
+          showToast('Script saved to your library!', 'emerald');
+        }
+
+        saveState();
+        renderScriptsLibrary();
+        return savedObj;
+      }
+
+      function loadScriptIntoEditor(scriptId) {
+        const scr = state.scripts.find((s) => s.id === scriptId);
+        if (!scr) return;
+
+        state.editingScriptId = scr.id;
+        state.selectedDuration = scr.duration || '30s';
+
+        document.getElementById('editorScriptTitle').value = scr.title;
+        document.getElementById('editorMetaNiche').textContent = scr.niche;
+        document.getElementById('editorMetaDuration').textContent = `Target: ${state.selectedDuration}`;
+        document.getElementById('editorScriptStatus').value = scr.status || 'Scripted';
+        document.getElementById('scriptOutputEditor').value = scr.content;
+        document.getElementById('saveScriptBtnText').textContent = 'Update Draft';
+
+        // Sync brief controls too
+        document.getElementById('inputTopic').value = scr.title;
+        if (NICHE_TRENDS[scr.niche]) {
+          document.getElementById('inputNiche').value = scr.niche;
+        }
+        syncDurationButtons();
+        updateLivePromptPreview();
+        updateScriptStats();
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        showToast(`Loaded "${scr.title}"`, 'cyan');
+      }
+
+      function resetEditorToBlank() {
+        state.editingScriptId = null;
+        document.getElementById('editorScriptTitle').value = '';
+        document.getElementById('scriptOutputEditor').value = '';
+        document.getElementById('editorScriptStatus').value = 'Scripted';
+        document.getElementById('editorMetaNiche').textContent = document.getElementById('inputNiche').value;
+        document.getElementById('editorMetaDuration').textContent = `Target: ${state.selectedDuration}`;
+        document.getElementById('saveScriptBtnText').textContent = 'Save Draft';
+        updateScriptStats();
+      }
+
+      function syncDurationButtons() {
+        document.querySelectorAll('.duration-btn').forEach((btn) => {
+          const active = btn.dataset.duration === state.selectedDuration;
+          btn.className = active
+            ? 'duration-btn py-2 rounded-xl text-xs font-medium border border-claudeAmber bg-claudeAmber/15 text-amber-300 transition'
+            : 'duration-btn py-2 rounded-xl text-xs font-medium border border-borderSubtle bg-obsidian text-zinc-400 hover:text-white transition';
+        });
+      }
+
+      function getStatusBadgeStyle(status) {
+        const map = {
+          Idea: 'bg-zinc-800 text-zinc-300 border-zinc-700',
+          Scripted: 'bg-claudeAmber/15 text-amber-300 border-claudeAmber/35',
+          Filmed: 'bg-purple-500/15 text-purple-300 border-purple-500/35',
+          Scheduled: 'bg-tiktokCyan/15 text-tiktokCyan border-tiktokCyan/35',
+          Posted: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35',
+        };
+        return map[status] || map.Idea;
+      }
+
+      function renderScriptsLibrary() {
+        const grid = document.getElementById('scriptsLibraryGrid');
+        const query = document.getElementById('librarySearchInput').value.trim().toLowerCase();
+        const statusFilter = document.getElementById('libraryStatusFilter').value;
+
+        const filtered = state.scripts.filter((s) => {
+          const matchText =
+            !query ||
+            s.title.toLowerCase().includes(query) ||
+            s.niche.toLowerCase().includes(query) ||
+            s.content.toLowerCase().includes(query);
+          const matchStatus = statusFilter === 'ALL' || s.status === statusFilter;
+          return matchText && matchStatus;
+        });
+
+        if (filtered.length === 0) {
+          grid.innerHTML = `
+            <div class="col-span-full py-10 text-center border border-dashed border-borderSubtle rounded-xl">
+              <p class="text-sm text-zinc-400">No saved scripts match your filter.</p>
+              <p class="text-xs text-zinc-500 mt-1">Build a brief above, generate in Claude.ai, and save it here.</p>
+            </div>`;
+          return;
+        }
+
+        grid.innerHTML = filtered
+          .map((s) => {
+            const snippet = s.content.replace(/\[[^\]]+\]/g, '').replace(/\s+/g, ' ').trim().slice(0, 110);
+            const dateStr = new Date(s.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            return `
+              <div class="bg-obsidian border border-borderSubtle hover:border-zinc-700 rounded-xl p-4 flex flex-col justify-between gap-3 transition group">
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="px-2 py-0.5 rounded-md text-[10px] font-medium border ${getStatusBadgeStyle(s.status)}">${escapeHtml(s.status)}</span>
+                    <span class="text-[11px] font-mono text-zinc-500">${escapeHtml(s.duration || '30s')} • ${dateStr}</span>
+                  </div>
+                  <h4 class="text-sm font-semibold text-white line-clamp-1 group-hover:text-tiktokCyan transition">${escapeHtml(s.title)}</h4>
+                  <p class="text-[11px] text-zinc-500 font-medium">${escapeHtml(s.niche)}</p>
+                  <p class="text-xs text-zinc-400 line-clamp-2 leading-relaxed">${escapeHtml(snippet)}...</p>
+                </div>
+
+                <div class="flex items-center justify-between gap-2 pt-2.5 border-t border-borderSubtle/80">
+                  <div class="flex items-center gap-1.5">
+                    <button type="button" data-action="load" data-id="${s.id}" class="lib-action-btn px-2.5 py-1.5 rounded-lg bg-elevated hover:bg-zinc-800 text-xs font-medium text-zinc-200 flex items-center gap-1 transition">
+                      <i data-lucide="edit-3" class="w-3 h-3"></i>
+                      <span>Load</span>
+                    </button>
+                    <button type="button" data-action="schedule" data-id="${s.id}" class="lib-action-btn px-2.5 py-1.5 rounded-lg bg-tiktokCyan/10 hover:bg-tiktokCyan/20 text-xs font-medium text-tiktokCyan flex items-center gap-1 transition">
+                      <i data-lucide="calendar-plus" class="w-3 h-3"></i>
+                      <span>Quick Schedule</span>
+                    </button>
+                  </div>
+                  <button type="button" data-action="delete" data-id="${s.id}" class="lib-action-btn p-1.5 rounded-lg text-zinc-500 hover:text-tiktokRose hover:bg-tiktokRose/10 transition" aria-label="Delete script">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </div>
+            `;
+          })
+          .join('');
+
+        refreshIcons();
+      }
+
+      // =========================================================================
+      // 7. TELEPROMPTER MODE ENGINE
+      // =========================================================================
+      function openTeleprompter() {
+        const content = document.getElementById('scriptOutputEditor').value.trim();
+        if (!content) {
+          showToast('Paste or write a script first before launching Teleprompter Mode.', 'amber');
+          return;
+        }
+        const title = document.getElementById('editorScriptTitle').value.trim() || 'TikTok Recording Script';
+        document.getElementById('teleprompterTitle').textContent = title;
+        document.getElementById('teleprompterText').textContent = content;
+
+        const modal = document.getElementById('teleprompterModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        const scrollArea = document.getElementById('teleprompterScrollArea');
+        scrollArea.scrollTop = 0;
+        state.tpScrollPos = 0;
+        stopTeleprompterScroll();
+        refreshIcons();
+      }
+
+      function closeTeleprompter() {
+        stopTeleprompterScroll();
+        const modal = document.getElementById('teleprompterModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      function startTeleprompterScroll() {
+        if (state.tpPlaying) return;
+        state.tpPlaying = true;
+        const scrollArea = document.getElementById('teleprompterScrollArea');
+        state.tpScrollPos = scrollArea.scrollTop;
+
+        document.getElementById('tpPlayLabel').textContent = 'Pause';
+        document.getElementById('tpPlayIcon').setAttribute('data-lucide', 'pause');
+        refreshIcons();
+
+        function step() {
+          if (!state.tpPlaying) return;
+          const speed = Number(document.getElementById('tpSpeedInput').value) || 3;
+          state.tpScrollPos += speed * 0.35;
+          scrollArea.scrollTop = state.tpScrollPos;
+
+          if (scrollArea.scrollTop + scrollArea.clientHeight >= scrollArea.scrollHeight - 4) {
+            stopTeleprompterScroll();
+            return;
+          }
+          state.tpRafId = requestAnimationFrame(step);
+        }
+        state.tpRafId = requestAnimationFrame(step);
+      }
+
+      function stopTeleprompterScroll() {
+        state.tpPlaying = false;
+        if (state.tpRafId) {
+          cancelAnimationFrame(state.tpRafId);
+          state.tpRafId = null;
+        }
+        document.getElementById('tpPlayLabel').textContent = 'Start Scroll';
+        document.getElementById('tpPlayIcon').setAttribute('data-lucide', 'play');
+        refreshIcons();
+      }
+
+      // =========================================================================
+      // 8. PUBLISHING CALENDAR & TREND-BASED DATE/TIME ANALYZER
+      // =========================================================================
+      function analyzeBestSlots(niche, count = 3) {
+        const trend = NICHE_TRENDS[niche] || NICHE_TRENDS['Tech & AI'];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const candidates = [];
+
+        // Scan next 14 days
+        for (let offset = 1; offset <= 14; offset++) {
+          const d = new Date(today);
+          d.setDate(today.getDate() + offset);
+          const iso = formatDateISO(d);
+          const dayIdx = getMondayIndex(d);
+
+          const postsOnDate = state.posts.filter((p) => p.date === iso);
+          const prevDay = new Date(d);
+          prevDay.setDate(d.getDate() - 1);
+          const postsOnPrev = state.posts.filter((p) => p.date === formatDateISO(prevDay));
+
+          trend.matrix[dayIdx].forEach((baseScore, slotIdx) => {
+            let score = baseScore;
+            // Avoid double-booking days that already have scheduled posts
+            if (postsOnDate.length > 0) score -= 30 * postsOnDate.length;
+            // Slight spacing bonus for non-consecutive days
+            if (postsOnPrev.length > 0) score -= 4;
+            // Prefer upcoming 7 days slightly
+            if (offset <= 7) score += 2;
+
+            score = Math.max(40, Math.min(99, score));
+
+            candidates.push({
+              date: iso,
+              time: trend.times[slotIdx],
+              score,
+              windowName: SLOT_WINDOW_NAMES[slotIdx],
+              insight: trend.insight,
+            });
+          });
+        }
+
+        candidates.sort((a, b) => b.score - a.score);
+
+        const picked = [];
+        const usedDates = new Set();
+        for (const item of candidates) {
+          if (!usedDates.has(item.date)) {
+            picked.push(item);
+            usedDates.add(item.date);
+          }
+          if (picked.length >= count) break;
+        }
+        return picked;
+      }
+
+      function getBestTimeForDate(isoDate, niche) {
+        const trend = NICHE_TRENDS[niche] || NICHE_TRENDS['Tech & AI'];
+        const d = parseISODate(isoDate);
+        const dayIdx = getMondayIndex(d);
+        const scores = trend.matrix[dayIdx];
+
+        let bestIdx = 0;
+        let bestScore = -1;
+        scores.forEach((sc, idx) => {
+          if (sc > bestScore) {
+            bestScore = sc;
+            bestIdx = idx;
+          }
+        });
+
+        return {
+          time: trend.times[bestIdx],
+          score: bestScore,
+          windowName: SLOT_WINDOW_NAMES[bestIdx],
+        };
+      }
+
+      function renderRecommendedSlots() {
+        const niche = document.getElementById('trendNicheSelect').value;
+        const slots = analyzeBestSlots(niche, 3);
+        const grid = document.getElementById('recommendedSlotsGrid');
+
+        grid.innerHTML = slots
+          .map((slot, index) => {
+            const badgeClass =
+              index === 0
+                ? 'bg-tiktokCyan/15 text-tiktokCyan border-tiktokCyan/40'
+                : 'bg-elevated text-zinc-200 border-borderSubtle';
+            return `
+              <div class="bg-obsidian border border-borderSubtle hover:border-tiktokCyan/50 rounded-xl p-4 flex flex-col justify-between gap-3.5 transition">
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="px-2 py-0.5 rounded-md text-[11px] font-semibold border ${badgeClass}">${slot.score}% Peak</span>
+                    <span class="text-[11px] font-mono text-zinc-500">${slot.windowName}</span>
+                  </div>
+                  <p class="text-sm font-semibold text-white">${formatDisplayDate(slot.date)} &bull; ${formatTime12h(slot.time)}</p>
+                  <p class="text-xs text-zinc-400 leading-relaxed">${escapeHtml(slot.insight)}</p>
+                </div>
+
+                <button type="button" data-date="${slot.date}" data-time="${slot.time}" data-score="${slot.score}" data-niche="${escapeHtml(niche)}"
+                  class="schedule-here-btn w-full py-2 px-3 rounded-xl bg-elevated hover:bg-tiktokCyan/15 border border-borderSubtle hover:border-tiktokCyan/40 text-xs font-semibold text-zinc-200 hover:text-tiktokCyan flex items-center justify-center gap-1.5 transition">
+                  <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+                  <span>Schedule Here</span>
+                </button>
+              </div>
+            `;
+          })
+          .join('');
+
+        refreshIcons();
+      }
+
+      function renderWeeklyHeatmap() {
+        const niche = document.getElementById('trendNicheSelect').value;
+        const trend = NICHE_TRENDS[niche] || NICHE_TRENDS['Tech & AI'];
+        document.getElementById('heatmapSubtitle').textContent = `${niche} engagement velocity across 4 daily windows`;
+
+        const container = document.getElementById('weeklyHeatmapGrid');
+        let html = `
+          <div class="min-w-[480px] space-y-1.5">
+            <div class="grid grid-cols-5 gap-2 text-[11px] font-medium text-zinc-500 pb-1">
+              <div>Day of Week</div>
+              <div class="text-center">Morning (7–10a)</div>
+              <div class="text-center">Afternoon (12–2p)</div>
+              <div class="text-center">Evening (6–9p)</div>
+              <div class="text-center">Late Night (9–11p)</div>
+            </div>
+        `;
+
+        DAY_SHORT_NAMES.forEach((dayName, dIdx) => {
+          html += `<div class="grid grid-cols-5 gap-2 items-center">`;
+          html += `<div class="text-xs font-medium text-zinc-300">${dayName}</div>`;
+
+          trend.matrix[dIdx].forEach((score, sIdx) => {
+            let cellClass = 'bg-elevated text-zinc-500 border-borderSubtle';
+            if (score >= 92) {
+              cellClass = 'bg-tiktokCyan text-obsidian font-bold border-tiktokCyan';
+            } else if (score >= 80) {
+              cellClass = 'bg-tiktokCyan/55 text-white font-semibold border-tiktokCyan/50';
+            } else if (score >= 65) {
+              cellClass = 'bg-tiktokCyan/25 text-zinc-200 border-tiktokCyan/20';
+            }
+
+            html += `
+              <div title="${dayName} ${SLOT_WINDOW_NAMES[sIdx]} (${formatTime12h(trend.times[sIdx])}): ${score}% Engagement Score"
+                class="h-8 rounded-lg border text-xs font-mono flex items-center justify-center transition ${cellClass}">
+                ${score}%
+              </div>
+            `;
+          });
+          html += `</div>`;
+        });
+
+        html += `</div>`;
+        container.innerHTML = html;
+      }
+
+      function getStatusDotColor(status) {
+        const map = {
+          Idea: 'bg-zinc-400',
+          Scripted: 'bg-claudeAmber',
+          Filmed: 'bg-purple-400',
+          Scheduled: 'bg-tiktokCyan',
+          Posted: 'bg-emerald-400',
+        };
+        return map[status] || 'bg-zinc-400';
+      }
+
+      function renderCalendar() {
+        const year = state.calendarDate.getFullYear();
+        const month = state.calendarDate.getMonth();
+
+        document.getElementById('calendarMonthLabel').textContent = state.calendarDate.toLocaleDateString('en-US', {
+          month: 'long',
+          year: 'numeric',
+        });
+
+        const firstDay = new Date(year, month, 1);
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const leadingBlanks = getMondayIndex(firstDay);
+        const todayISO = formatDateISO(new Date());
+
+        const grid = document.getElementById('calendarGrid');
+        let html = '';
+
+        for (let i = 0; i < leadingBlanks; i++) {
+          html += `<div class="min-h-[84px] sm:min-h-[106px] rounded-xl bg-obsidian/40 border border-borderSubtle/40 p-1.5"></div>`;
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dObj = new Date(year, month, day);
+          const iso = formatDateISO(dObj);
+          const isToday = iso === todayISO;
+
+          const postsForDay = state.posts
+            .filter((p) => p.date === iso)
+            .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+
+          const cellBorder = isToday
+            ? 'border-tiktokCyan/70 bg-tiktokCyan/[0.04]'
+            : 'border-borderSubtle bg-obsidian hover:border-zinc-700';
+
+          html += `
+            <div data-date="${iso}" class="calendar-day-cell min-h-[84px] sm:min-h-[106px] rounded-xl border ${cellBorder} p-1.5 sm:p-2 flex flex-col gap-1 cursor-pointer transition group">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-medium ${isToday ? 'text-tiktokCyan font-bold' : 'text-zinc-400 group-hover:text-white'}">${day}</span>
+                <span class="opacity-0 group-hover:opacity-100 text-[10px] text-zinc-500 transition hidden sm:inline">+ Add</span>
+              </div>
+
+              <div class="space-y-1 overflow-hidden">
+                ${postsForDay
+                  .map(
+                    (post) => `
+                    <button type="button" data-post-id="${post.id}"
+                      class="cal-post-chip w-full text-left px-1.5 py-1 rounded-md bg-elevated hover:bg-zinc-800 border border-borderSubtle text-[10px] leading-tight flex items-center gap-1.5 transition truncate">
+                      <span class="w-1.5 h-1.5 rounded-full ${getStatusDotColor(post.status)} shrink-0"></span>
+                      <span class="font-mono text-zinc-400 hidden sm:inline shrink-0">${post.time}</span>
+                      <span class="text-zinc-100 truncate">${escapeHtml(post.title)}</span>
+                    </button>`
+                  )
+                  .join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        grid.innerHTML = html;
+      }
+
+      function renderUpcomingQueue() {
+        const todayISO = formatDateISO(new Date());
+        const upcoming = state.posts
+          .filter((p) => p.date >= todayISO)
+          .sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
+
+        document.getElementById('upcomingQueueCount').textContent = `${upcoming.length} post${upcoming.length === 1 ? '' : 's'}`;
+        const list = document.getElementById('upcomingQueueList');
+
+        if (upcoming.length === 0) {
+          list.innerHTML = `
+            <div class="py-8 text-center border border-dashed border-borderSubtle rounded-xl">
+              <p class="text-xs text-zinc-400">No upcoming posts scheduled.</p>
+              <p class="text-[11px] text-zinc-500 mt-1">Click any calendar day or "Schedule Here" above.</p>
+            </div>`;
+          return;
+        }
+
+        list.innerHTML = upcoming
+          .map(
+            (post) => `
+            <div data-post-id="${post.id}" class="queue-card bg-obsidian border border-borderSubtle hover:border-zinc-700 rounded-xl p-3.5 space-y-2 cursor-pointer transition">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[11px] font-mono text-tiktokCyan">${formatDisplayDate(post.date)} &bull; ${formatTime12h(post.time)}</span>
+                <button type="button" data-cycle-id="${post.id}" title="Click to advance status (Idea → Scripted → Filmed → Scheduled → Posted)"
+                  class="cycle-status-btn px-2 py-0.5 rounded-md text-[10px] font-semibold border transition flex items-center gap-1 ${getStatusBadgeStyle(post.status)}">
+                  <span>${escapeHtml(post.status)}</span>
+                  <i data-lucide="arrow-right" class="w-2.5 h-2.5"></i>
+                </button>
+              </div>
+              <p class="text-xs font-semibold text-white line-clamp-1">${escapeHtml(post.title)}</p>
+              <div class="flex items-center justify-between text-[11px] text-zinc-500">
+                <span>${escapeHtml(post.niche)}</span>
+                ${post.trendScore ? `<span class="font-mono text-zinc-400">${post.trendScore}% Peak</span>` : ''}
+              </div>
+            </div>`
+          )
+          .join('');
+
+        refreshIcons();
+      }
+
+      function cyclePostStatus(postId) {
+        const post = state.posts.find((p) => p.id === postId);
+        if (!post) return;
+        const currIdx = STATUS_PIPELINE.indexOf(post.status);
+        const nextStatus = STATUS_PIPELINE[(currIdx + 1) % STATUS_PIPELINE.length];
+        post.status = nextStatus;
+
+        // Also sync linked script status if linked
+        if (post.scriptId) {
+          const scr = state.scripts.find((s) => s.id === post.scriptId);
+          if (scr) scr.status = nextStatus;
+        }
+
+        saveState();
+        renderCalendar();
+        renderUpcomingQueue();
+        renderScriptsLibrary();
+        showToast(`Status updated to "${nextStatus}"`, 'cyan');
+      }
+
+      // =========================================================================
+      // 9. POST SCHEDULING MODAL
+      // =========================================================================
+      function populateModalScriptsDropdown(selectedScriptId = '') {
+        const select = document.getElementById('modalScriptSelect');
+        select.innerHTML = `<option value="">— Standalone post (no linked script) —</option>`;
+        state.scripts.forEach((s) => {
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = `${s.title} (${s.niche})`;
+          if (s.id === selectedScriptId) opt.selected = true;
+          select.appendChild(opt);
+        });
+      }
+
+      function openPostModal({ postId = null, date = '', time = '', title = '', niche = '', scriptId = '', trendScore = null } = {}) {
+        const modal = document.getElementById('postModal');
+        const deleteBtn = document.getElementById('deletePostModalBtn');
+        const scoreBadge = document.getElementById('modalTrendScoreBadge');
+
+        populateModalScriptsDropdown(scriptId);
+
+        if (postId) {
+          const post = state.posts.find((p) => p.id === postId);
+          if (!post) return;
+          document.getElementById('postModalTitle').textContent = 'Edit Scheduled TikTok Post';
+          document.getElementById('modalPostId').value = post.id;
+          document.getElementById('modalScriptSelect').value = post.scriptId || '';
+          document.getElementById('modalPostTitle').value = post.title;
+          document.getElementById('modalPostNiche').value = post.niche;
+          document.getElementById('modalPostStatus').value = post.status;
+          document.getElementById('modalPostDate').value = post.date;
+          document.getElementById('modalPostTime').value = post.time;
+          document.getElementById('modalPostNotes').value = post.notes || '';
+          deleteBtn.classList.remove('hidden');
+
+          if (post.trendScore) {
+            scoreBadge.textContent = `${post.trendScore}% Trend Match`;
+            scoreBadge.classList.remove('hidden');
+          } else {
+            scoreBadge.classList.add('hidden');
+          }
+        } else {
+          document.getElementById('postModalTitle').textContent = 'Schedule TikTok Post';
+          document.getElementById('modalPostId').value = '';
+          document.getElementById('modalPostTitle').value = title || '';
+          document.getElementById('modalPostNiche').value = niche || document.getElementById('trendNicheSelect').value;
+          document.getElementById('modalPostStatus').value = 'Scheduled';
+          document.getElementById('modalPostDate').value = date || formatDateISO(new Date());
+          document.getElementById('modalPostTime').value = time || '19:30';
+          document.getElementById('modalPostNotes').value = '';
+          deleteBtn.classList.add('hidden');
+
+          if (trendScore) {
+            scoreBadge.textContent = `${trendScore}% Trend Match`;
+            scoreBadge.classList.remove('hidden');
+          } else {
+            scoreBadge.classList.add('hidden');
+          }
+        }
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        refreshIcons();
+      }
+
+      function closePostModal() {
+        const modal = document.getElementById('postModal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      function handleSavePostForm(e) {
+        e.preventDefault();
+        const id = document.getElementById('modalPostId').value;
+        const scriptId = document.getElementById('modalScriptSelect').value;
+        const title = document.getElementById('modalPostTitle').value.trim();
+        const niche = document.getElementById('modalPostNiche').value;
+        const status = document.getElementById('modalPostStatus').value;
+        const date = document.getElementById('modalPostDate').value;
+        const time = document.getElementById('modalPostTime').value;
+        const notes = document.getElementById('modalPostNotes').value.trim();
+
+        const dayTrend = getBestTimeForDate(date, niche);
+
+        if (id) {
+          const idx = state.posts.findIndex((p) => p.id === id);
+          if (idx !== -1) {
+            state.posts[idx] = {
+              ...state.posts[idx],
+              scriptId,
+              title,
+              niche,
+              status,
+              date,
+              time,
+              notes,
+              trendScore: dayTrend.score,
+            };
+            showToast('Scheduled post updated!', 'cyan');
+          }
+        } else {
+          state.posts.push({
+            id: generateId('post'),
+            scriptId,
+            title,
+            niche,
+            status,
+            date,
+            time,
+            notes,
+            trendScore: dayTrend.score,
+          });
+          showToast('Post scheduled on calendar!', 'emerald');
+        }
+
+        if (scriptId) {
+          const linkedScript = state.scripts.find((s) => s.id === scriptId);
+          if (linkedScript) linkedScript.status = status;
+        }
+
+        saveState();
+        closePostModal();
+        renderCalendar();
+        renderRecommendedSlots();
+        renderUpcomingQueue();
+        renderScriptsLibrary();
+      }
+
+      // =========================================================================
+      // 10. WORKSPACE JSON BACKUP EXPORT & IMPORT
+      // =========================================================================
+      function handleExportWorkspaceJson() {
+        const payload = {
+          app: 'TikTok Studio OS',
+          version: '2.0-claude-bridge',
+          exportedAt: new Date().toISOString(),
+          scripts: state.scripts,
+          posts: state.posts,
+          prefs: state.prefs,
+        };
+
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `tiktok-studio-os-backup-${formatDateISO(new Date())}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showToast('Workspace JSON backup downloaded!', 'cyan');
+      }
+
+      function handleImportWorkspaceJson(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const parsed = JSON.parse(ev.target.result);
+            if (!Array.isArray(parsed.scripts) || !Array.isArray(parsed.posts)) {
+              throw new Error('Invalid backup format: missing scripts or posts arrays.');
+            }
+            state.scripts = parsed.scripts;
+            state.posts = parsed.posts;
+            if (parsed.prefs) state.prefs = { ...state.prefs, ...parsed.prefs };
+
+            saveState();
+            renderScriptsLibrary();
+            renderCalendar();
+            renderRecommendedSlots();
+            renderUpcomingQueue();
+            if (state.scripts.length > 0) {
+              loadScriptIntoEditor(state.scripts[0].id);
+            } else {
+              resetEditorToBlank();
+            }
+            showToast(`Restored ${state.scripts.length} scripts & ${state.posts.length} posts!`, 'emerald');
+          } catch (err) {
+            showToast(`Import failed: ${err.message}`, 'rose');
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      // =========================================================================
+      // 11. EVENT BINDINGS & INIT
+      // =========================================================================
+      function bindEvents() {
+        // Navigation tabs
+        document.querySelectorAll('.nav-btn').forEach((btn) => {
+          btn.addEventListener('click', () => switchView(btn.dataset.view));
+        });
+        document.getElementById('mobileMenuBtn').addEventListener('click', openMobileSidebar);
+        document.getElementById('closeMobileMenuBtn').addEventListener('click', closeMobileSidebar);
+        document.getElementById('mobileOverlay').addEventListener('click', closeMobileSidebar);
+
+        // Brief inputs live-sync XML prompt & niche
+        ['inputTopic', 'inputHookStyle', 'inputTone', 'inputDetails'].forEach((id) => {
+          document.getElementById(id).addEventListener('input', updateLivePromptPreview);
+        });
+
+        document.getElementById('inputNiche').addEventListener('change', (e) => {
+          const val = e.target.value;
+          state.prefs.selectedNiche = val;
+          document.getElementById('editorMetaNiche').textContent = val;
+          document.getElementById('trendNicheSelect').value = val;
+          saveState();
+          updateLivePromptPreview();
+        });
+
+        // Target Duration Pills (15s, 30s, 45s, 60s, 90s)
+        document.querySelectorAll('.duration-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            state.selectedDuration = btn.dataset.duration;
+            syncDurationButtons();
+            document.getElementById('editorMetaDuration').textContent = `Target: ${state.selectedDuration}`;
+            updateLivePromptPreview();
+            updateScriptStats();
+          });
+        });
+
+        // Claude.ai Account Bridge Actions
+        document.getElementById('copyAndOpenClaudeBtn').addEventListener('click', handleCopyPromptAndOpenClaude);
+        document.getElementById('copyPromptOnlyBtn').addEventListener('click', handleCopyPromptOnly);
+
+        document.getElementById('togglePromptDrawerBtn').addEventListener('click', () => {
+          const drawer = document.getElementById('engineeredPromptDrawer');
+          const chev = document.getElementById('promptDrawerChevron');
+          const isHidden = drawer.classList.contains('hidden');
+          drawer.classList.toggle('hidden');
+          chev.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+          updateLivePromptPreview();
+        });
+
+        document.getElementById('bannerPasteNowBtn').addEventListener('click', handlePasteFromClipboard);
+        document.getElementById('dismissBridgeBannerBtn').addEventListener('click', () => {
+          document.getElementById('bridgeStatusBanner').classList.add('hidden');
+        });
+
+        // Script Workspace Toolbar & Actions
+        document.getElementById('pasteClipboardBtn').addEventListener('click', handlePasteFromClipboard);
+        document.getElementById('scriptOutputEditor').addEventListener('input', updateScriptStats);
+
+        document.getElementById('copyScriptBtn').addEventListener('click', async () => {
+          const txt = document.getElementById('scriptOutputEditor').value;
+          if (!txt.trim()) return showToast('Nothing to copy yet.', 'amber');
+          const ok = await copyTextSafe(txt);
+          if (ok) showToast('Script copied to clipboard!', 'cyan');
+        });
+
+        document.getElementById('toolbarSaveBtn').addEventListener('click', saveCurrentScript);
+        document.getElementById('saveScriptBtn').addEventListener('click', saveCurrentScript);
+
+        document.getElementById('newScriptResetBtn').addEventListener('click', () => {
+          resetEditorToBlank();
+          showToast('Workspace cleared for a new script.', 'cyan');
+        });
+
+        // Schedule with Trend Engine CTA
+        document.getElementById('scheduleWithTrendBtn').addEventListener('click', () => {
+          const title = document.getElementById('editorScriptTitle').value.trim();
+          const content = document.getElementById('scriptOutputEditor').value.trim();
+          const niche = document.getElementById('editorMetaNiche').textContent || document.getElementById('inputNiche').value;
+
+          let linkedId = state.editingScriptId;
+          if (title && content && !linkedId) {
+            const saved = saveCurrentScript();
+            if (saved) linkedId = saved.id;
+          }
+
+          const topSlot = analyzeBestSlots(niche, 1)[0];
+          openPostModal({
+            title: title || 'New TikTok Video',
+            niche,
+            scriptId: linkedId || '',
+            date: topSlot ? topSlot.date : formatDateISO(new Date()),
+            time: topSlot ? topSlot.time : '19:30',
+            trendScore: topSlot ? topSlot.score : null,
+          });
+        });
+
+        // Teleprompter Mode Events
+        document.getElementById('openTeleprompterBtn').addEventListener('click', openTeleprompter);
+        document.getElementById('closeTeleprompterBtn').addEventListener('click', closeTeleprompter);
+        document.getElementById('tpPlayPauseBtn').addEventListener('click', () => {
+          if (state.tpPlaying) stopTeleprompterScroll();
+          else startTeleprompterScroll();
+        });
+        document.getElementById('tpResetBtn').addEventListener('click', () => {
+          stopTeleprompterScroll();
+          const scrollArea = document.getElementById('teleprompterScrollArea');
+          scrollArea.scrollTop = 0;
+          state.tpScrollPos = 0;
+        });
+        document.getElementById('tpSpeedInput').addEventListener('input', (e) => {
+          document.getElementById('tpSpeedVal').textContent = e.target.value;
+        });
+        document.getElementById('tpSizeInput').addEventListener('input', (e) => {
+          const px = e.target.value;
+          document.getElementById('tpSizeVal').textContent = `${px}px`;
+          document.getElementById('teleprompterText').style.fontSize = `${px}px`;
+        });
+        document.getElementById('tpMirrorBtn').addEventListener('click', () => {
+          state.tpMirrored = !state.tpMirrored;
+          document.getElementById('teleprompterText').classList.toggle('teleprompter-mirrored', state.tpMirrored);
+        });
+
+        // Saved Scripts Library Search, Filter & Actions
+        document.getElementById('librarySearchInput').addEventListener('input', renderScriptsLibrary);
+        document.getElementById('libraryStatusFilter').addEventListener('change', renderScriptsLibrary);
+        document.getElementById('scriptsLibraryGrid').addEventListener('click', (e) => {
+          const btn = e.target.closest('.lib-action-btn');
+          if (!btn) return;
+          const id = btn.dataset.id;
+          const action = btn.dataset.action;
+
+          if (action === 'load') {
+            loadScriptIntoEditor(id);
+          } else if (action === 'schedule') {
+            const scr = state.scripts.find((s) => s.id === id);
+            if (!scr) return;
+            const best = analyzeBestSlots(scr.niche, 1)[0];
+            openPostModal({
+              title: scr.title,
+              niche: scr.niche,
+              scriptId: scr.id,
+              date: best ? best.date : formatDateISO(new Date()),
+              time: best ? best.time : '19:30',
+              trendScore: best ? best.score : null,
+            });
+          } else if (action === 'delete') {
+            const scr = state.scripts.find((s) => s.id === id);
+            openConfirmModal(
+              'Delete Saved Script',
+              `Delete "${scr?.title || 'this script'}" from your library? This cannot be undone.`,
+              () => {
+                state.scripts = state.scripts.filter((s) => s.id !== id);
+                if (state.editingScriptId === id) resetEditorToBlank();
+                saveState();
+                renderScriptsLibrary();
+                showToast('Script removed from library.', 'rose');
+              }
+            );
+          }
+        });
+
+        // Calendar & Trend Engine Controls
+        document.getElementById('trendNicheSelect').addEventListener('change', (e) => {
+          const val = e.target.value;
+          state.prefs.selectedNiche = val;
+          document.getElementById('inputNiche').value = val;
+          saveState();
+          renderRecommendedSlots();
+          renderWeeklyHeatmap();
+        });
+
+        document.getElementById('analyzeBestSlotsBtn').addEventListener('click', () => {
+          renderRecommendedSlots();
+          renderWeeklyHeatmap();
+          showToast('Best trend slots analyzed against your calendar!', 'cyan');
+        });
+
+        document.getElementById('recommendedSlotsGrid').addEventListener('click', (e) => {
+          const btn = e.target.closest('.schedule-here-btn');
+          if (!btn) return;
+          openPostModal({
+            date: btn.dataset.date,
+            time: btn.dataset.time,
+            niche: btn.dataset.niche,
+            trendScore: Number(btn.dataset.score),
+          });
+        });
+
+        document.getElementById('calPrevBtn').addEventListener('click', () => {
+          state.calendarDate = new Date(state.calendarDate.getFullYear(), state.calendarDate.getMonth() - 1, 1);
+          renderCalendar();
+        });
+        document.getElementById('calNextBtn').addEventListener('click', () => {
+          state.calendarDate = new Date(state.calendarDate.getFullYear(), state.calendarDate.getMonth() + 1, 1);
+          renderCalendar();
+        });
+        document.getElementById('calTodayBtn').addEventListener('click', () => {
+          state.calendarDate = new Date();
+          renderCalendar();
+        });
+
+        document.getElementById('openNewPostModalBtn').addEventListener('click', () => {
+          const niche = document.getElementById('trendNicheSelect').value;
+          const best = analyzeBestSlots(niche, 1)[0];
+          openPostModal({
+            date: best ? best.date : formatDateISO(new Date()),
+            time: best ? best.time : '19:30',
+            niche,
+            trendScore: best ? best.score : null,
+          });
+        });
+
+        document.getElementById('calendarGrid').addEventListener('click', (e) => {
+          const chip = e.target.closest('.cal-post-chip');
+          if (chip) {
+            e.stopPropagation();
+            openPostModal({ postId: chip.dataset.postId });
+            return;
+          }
+          const cell = e.target.closest('.calendar-day-cell');
+          if (cell && cell.dataset.date) {
+            const niche = document.getElementById('trendNicheSelect').value;
+            const best = getBestTimeForDate(cell.dataset.date, niche);
+            openPostModal({
+              date: cell.dataset.date,
+              time: best.time,
+              niche,
+              trendScore: best.score,
+            });
+          }
+        });
+
+        // Upcoming Queue: Quick Status Cycle + Click to Edit
+        document.getElementById('upcomingQueueList').addEventListener('click', (e) => {
+          const cycleBtn = e.target.closest('.cycle-status-btn');
+          if (cycleBtn) {
+            e.stopPropagation();
+            cyclePostStatus(cycleBtn.dataset.cycleId);
+            return;
+          }
+          const card = e.target.closest('.queue-card');
+          if (card && card.dataset.postId) {
+            openPostModal({ postId: card.dataset.postId });
+          }
+        });
+
+        // Post Modal Events
+        document.getElementById('closePostModalBtn').addEventListener('click', closePostModal);
+        document.getElementById('cancelPostModalBtn').addEventListener('click', closePostModal);
+        document.getElementById('postModalForm').addEventListener('submit', handleSavePostForm);
+
+        document.getElementById('modalScriptSelect').addEventListener('change', (e) => {
+          const scr = state.scripts.find((s) => s.id === e.target.value);
+          if (scr) {
+            document.getElementById('modalPostTitle').value = scr.title;
+            if (NICHE_TRENDS[scr.niche]) {
+              document.getElementById('modalPostNiche').value = scr.niche;
+            }
+          }
+        });
+
+        document.getElementById('autoPickDayTimeBtn').addEventListener('click', () => {
+          const dateVal = document.getElementById('modalPostDate').value;
+          const nicheVal = document.getElementById('modalPostNiche').value;
+          if (!dateVal) return showToast('Select a date first.', 'rose');
+          const best = getBestTimeForDate(dateVal, nicheVal);
+          document.getElementById('modalPostTime').value = best.time;
+          const badge = document.getElementById('modalTrendScoreBadge');
+          badge.textContent = `${best.score}% Peak (${best.windowName})`;
+          badge.classList.remove('hidden');
+          showToast(`Auto-picked ${formatTime12h(best.time)} (${best.score}% peak)!`, 'cyan');
+        });
+
+        document.getElementById('deletePostModalBtn').addEventListener('click', () => {
+          const id = document.getElementById('modalPostId').value;
+          if (!id) return;
+          openConfirmModal('Delete Scheduled Post', 'Remove this post from your publishing calendar?', () => {
+            state.posts = state.posts.filter((p) => p.id !== id);
+            saveState();
+            closePostModal();
+            renderCalendar();
+            renderRecommendedSlots();
+            renderUpcomingQueue();
+            showToast('Post removed from calendar.', 'rose');
+          });
+        });
+
+        // Confirm Modal Events
+        document.getElementById('confirmCancelBtn').addEventListener('click', closeConfirmModal);
+        document.getElementById('confirmProceedBtn').addEventListener('click', () => {
+          if (typeof state.pendingConfirmAction === 'function') {
+            state.pendingConfirmAction();
+          }
+          closeConfirmModal();
+        });
+
+        // JSON Backup Export & Import
+        document.getElementById('exportJsonBtn').addEventListener('click', handleExportWorkspaceJson);
+        document.getElementById('importJsonBtn').addEventListener('click', () => {
+          document.getElementById('importJsonFileInput').click();
+        });
+        document.getElementById('importJsonFileInput').addEventListener('change', (e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            handleImportWorkspaceJson(file);
+            e.target.value = '';
+          }
+        });
+
+        // Escape key closes modals cleanly
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            closeTeleprompter();
+            closePostModal();
+            closeConfirmModal();
+          }
+        });
+      }
+
+      // =========================================================================
+      // 12. INITIALIZE DASHBOARD
+      // =========================================================================
+      function init() {
+        loadState();
+        bindEvents();
+
+        // Sync saved niche preference
+        const savedNiche = state.prefs.selectedNiche || 'Tech & AI';
+        if (NICHE_TRENDS[savedNiche]) {
+          document.getElementById('inputNiche').value = savedNiche;
+          document.getElementById('trendNicheSelect').value = savedNiche;
+        }
+
+        updateLivePromptPreview();
+        renderScriptsLibrary();
+
+        // Pre-load first starter script into the editor on initial visit
+        if (state.scripts.length > 0) {
+          loadScriptIntoEditor(state.scripts[0].id);
+        } else {
+          updateScriptStats();
+        }
+
+        switchView('studio');
+        refreshIcons();
+      }
+
+      window.addEventListener('DOMContentLoaded', init);
+    })();
+  </script>
+</body>
+</html>
