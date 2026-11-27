@@ -1,0 +1,997 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Content Desk</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Sinhala:wght@400;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Layout: a production desk. Slim command bar, one status strip, then a single working surface per tab (list + editor, or form + schedule). */
+:root{
+  --bg:#F2F4F5; --surface:#FFFFFF; --surface-2:#E9EDEF; --line:#D3DADE;
+  --fg:#12181C; --fg-2:#53606A; --accent:#0B7A85; --accent-ink:#FFFFFF; --accent-soft:#D6EDEF;
+  --good:#1D7A45; --good-soft:#DAF0E3; --warn:#975800; --warn-soft:#F8E9CF; --crit:#B3261E; --crit-soft:#F7DDDA;
+  --font-body:'Inter','Noto Sans Sinhala',system-ui,sans-serif;
+  --font-head:'Space Grotesk','Inter','Noto Sans Sinhala',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1417; --surface:#171E22; --surface-2:#1F282D; --line:#2B363C;
+    --fg:#E8EDEF; --fg-2:#93A1AA; --accent:#4DC0CB; --accent-ink:#06262A; --accent-soft:#14383D;
+    --good:#5CCB8B; --good-soft:#17382A; --warn:#E0A84A; --warn-soft:#3B2C12; --crit:#F0897F; --crit-soft:#3F1D1A;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1417; --surface:#171E22; --surface-2:#1F282D; --line:#2B363C;
+  --fg:#E8EDEF; --fg-2:#93A1AA; --accent:#4DC0CB; --accent-ink:#06262A; --accent-soft:#14383D;
+  --good:#5CCB8B; --good-soft:#17382A; --warn:#E0A84A; --warn-soft:#3B2C12; --crit:#F0897F; --crit-soft:#3F1D1A;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5}
+h1,h2,h3{font-family:var(--font-head);margin:0;font-weight:600;text-wrap:balance}
+button,input,select,textarea{font:inherit;color:inherit}
+.shell{max-width:1200px;margin:0 auto;padding-block:20px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--fg-2)}
+.label{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-2);font-weight:600}
+
+/* command bar */
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px}
+.brand h1{font-size:22px;letter-spacing:-.01em}
+.tally{width:10px;height:10px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line)}
+.tally.on{background:var(--crit);border-color:var(--crit);box-shadow:0 0 0 4px var(--crit-soft)}
+.clock{margin-left:auto;font-size:13px;color:var(--fg-2)}
+.tabs{display:flex;gap:4px;order:3;width:100%}
+.tab{background:none;border:0;border-bottom:2px solid transparent;padding:8px 14px 8px 2px;margin-right:12px;font-weight:500;color:var(--fg-2);cursor:pointer;font-family:var(--font-head);font-size:16px}
+.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.tab:hover{color:var(--fg)}
+
+/* status strip */
+.strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid var(--line)}
+.strip .cell{padding:16px 20px 16px 0;display:flex;flex-direction:column;gap:6px;min-width:0}
+.strip .cell+.cell{padding-left:20px;border-left:1px solid var(--line)}
+.strip strong{font-family:var(--font-head);font-size:18px;font-weight:600;overflow-wrap:anywhere}
+.strip .sub{font-size:13px;color:var(--fg-2)}
+.pipe{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--surface-2);gap:2px}
+.pipe i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px;color:var(--fg-2)}
+.legend b{color:var(--fg);font-weight:600}
+.s-Idea{background:var(--line)} .s-Drafted{background:var(--accent-soft);outline:1px solid var(--accent);outline-offset:-1px}
+.s-Filmed{background:var(--warn)} .s-Edited{background:var(--accent)} .s-Posted{background:var(--good)}
+
+/* shared controls */
+.btn{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 13px;font-weight:500;cursor:pointer;line-height:1.2}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.danger{color:var(--crit)}
+.btn.sm{padding:5px 9px;font-size:13px}
+.btn[disabled]{opacity:.5;cursor:default}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input,select,textarea{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+textarea{resize:vertical;line-height:1.65}
+label{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--fg-2);font-weight:500;min-width:0}
+.pill{display:inline-block;font-size:12px;font-weight:600;border-radius:999px;padding:1px 9px;border:1px solid transparent;white-space:nowrap}
+.p-Idea{background:var(--surface-2);color:var(--fg-2)} .p-Drafted{background:var(--accent-soft);color:var(--accent)}
+.p-Filmed{background:var(--warn-soft);color:var(--warn)} .p-Edited{background:var(--accent);color:var(--accent-ink)}
+.p-Posted,.p-posted{background:var(--good-soft);color:var(--good)} .p-Planned{background:var(--accent-soft);color:var(--accent)}
+.p-Skipped{background:var(--surface-2);color:var(--fg-2)} .p-late{background:var(--warn-soft);color:var(--warn)}
+.note{margin:14px 0 0;padding:10px 12px;border-radius:8px;background:var(--warn-soft);color:var(--warn);font-size:13.5px}
+.note[hidden]{display:none}
+.empty{padding:28px 4px;color:var(--fg-2);max-width:46ch}
+.empty h3{color:var(--fg);font-size:18px;margin-bottom:6px}
+.empty .btn{margin-top:12px}
+
+/* panels */
+.panel{padding-top:24px}
+.panel[hidden]{display:none}
+.split{display:grid;grid-template-columns:minmax(250px,320px) minmax(0,1fr);gap:28px;align-items:start}
+.split.cap{grid-template-columns:minmax(260px,360px) minmax(0,1fr)}
+.list-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.list-head h2{font-size:18px}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 11px;font-size:13px;cursor:pointer;color:var(--fg-2)}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+ul.plain{list-style:none;margin:0;padding:0}
+.srow{display:block;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:11px 8px;cursor:pointer}
+.srow:hover{background:var(--surface-2)}
+.srow[aria-current="true"]{background:var(--surface);box-shadow:inset 3px 0 0 var(--accent)}
+.srow .t{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.srow strong{font-weight:600;overflow-wrap:anywhere}
+.srow .hook{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:13px;color:var(--fg-2);margin-top:3px}
+.srow .meta{font-size:12px;color:var(--fg-2);margin-top:5px;display:flex;gap:8px;align-items:center}
+
+/* script editor */
+.editor{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;min-width:0}
+.ed-top{display:flex;gap:12px;align-items:center}
+.title-in{font-family:var(--font-head);font-size:22px;font-weight:600;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:4px 0;background:transparent}
+.save{font-size:12.5px;color:var(--fg-2);white-space:nowrap;min-width:64px;text-align:right}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.block{margin-top:14px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.actions.foot{justify-content:space-between;margin-top:16px}
+.draft{margin-top:14px;border:1px dashed var(--accent);border-radius:10px;padding:14px;background:var(--accent-soft)}
+.draft[hidden]{display:none}
+.draft pre{white-space:pre-wrap;margin:8px 0 12px;font:inherit;line-height:1.65;overflow-wrap:anywhere}
+.meter{margin-top:18px}
+.meter-bar{position:relative;height:12px;background:var(--surface-2);border-radius:6px;overflow:visible}
+.meter-bar i{position:absolute;inset:0 auto 0 0;border-radius:6px;background:var(--accent);transition:width .15s}
+.meter-bar.warn i{background:var(--warn)} .meter-bar.good i{background:var(--good)}
+.meter-bar b{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--fg);left:80%}
+.meter-text{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:12.5px;margin-top:7px;color:var(--fg-2)}
+#sBody{font-size:15.5px;min-height:340px}
+
+/* timeline */
+.daystrip{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(86px,1fr);gap:0;overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.day{background:none;border:0;border-left:1px solid var(--line);padding:10px 8px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:3px;min-height:92px}
+.day:first-child{border-left:0}
+.day:hover{background:var(--surface-2)}
+.day .wd{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-2);font-weight:600}
+.day .dn{font-family:var(--font-head);font-size:20px;font-weight:600}
+.day.today{box-shadow:inset 0 3px 0 var(--accent)}
+.day.sel{background:var(--accent-soft)}
+.day .tag{font-size:11.5px;border-radius:5px;padding:1px 5px;font-family:var(--font-mono);white-space:nowrap;width:fit-content}
+.tl-grid{display:grid;grid-template-columns:minmax(260px,340px) minmax(0,1fr);gap:28px;align-items:start;margin-top:24px}
+.form{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.form h2{font-size:18px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.slots{display:flex;flex-wrap:wrap;gap:6px}
+.slots .chip{font-family:var(--font-mono);font-size:12.5px}
+.group{margin-bottom:26px}
+.group h3{font-size:16px;margin-bottom:8px;display:flex;gap:8px;align-items:baseline}
+.group h3 span{font-size:13px;color:var(--fg-2);font-family:var(--font-body);font-weight:400}
+.post{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:6px 14px;align-items:center;border-top:1px solid var(--line);padding:12px 0}
+.post .when{display:flex;flex-direction:column;line-height:1.2}
+.post .when b{font-family:var(--font-head);font-size:19px}
+.post .when span{font-size:12px;color:var(--fg-2)}
+.post .what strong{font-weight:600;overflow-wrap:anywhere}
+.post .what small{display:block;color:var(--fg-2);font-size:13px}
+.post .ctl{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.post .ctl select{width:auto;padding:5px 8px;font-size:13px}
+.post .metrics{grid-column:2 / -1;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.post .metrics label{flex-direction:row;align-items:center;gap:6px;font-size:12.5px}
+.post .metrics input{width:84px;padding:4px 8px}
+.bars{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.bar-row{display:grid;grid-template-columns:64px minmax(0,1fr) 92px;gap:10px;align-items:center;font-size:13px}
+.bar-row .track{height:12px;background:var(--surface-2);border-radius:6px;overflow:hidden}
+.bar-row .track i{display:block;height:100%;background:var(--accent);border-radius:6px}
+.bar-row .v{text-align:right;color:var(--fg-2)}
+
+/* captions */
+.cap-opts{display:flex;flex-wrap:wrap;gap:6px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:7px 12px;cursor:pointer;font-weight:500;color:var(--fg-2)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.chip.tagc[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.out textarea{min-height:170px;font-size:15.5px}
+.counts{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--fg-2);margin-top:6px}
+.variants{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.variant{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.variant p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.lib .item{border-top:1px solid var(--line);padding:12px 0;display:flex;flex-direction:column;gap:8px}
+.lib .item p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}
+.lib .item .acts{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.lib .item .acts span{font-size:12.5px;color:var(--fg-2);margin-right:auto}
+
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:13.5px;box-shadow:0 6px 24px rgba(0,0,0,.25);z-index:20;max-width:calc(100vw - 32px)}
+#toast[hidden]{display:none}
+
+@media (max-width:820px){
+  .split,.split.cap,.tl-grid{grid-template-columns:minmax(0,1fr);gap:20px}
+  .strip{grid-template-columns:minmax(0,1fr)}
+  .strip .cell,.strip .cell+.cell{padding:12px 0;border-left:0}
+  .strip .cell+.cell{border-top:1px solid var(--line)}
+  .clock{margin-left:0;width:100%}
+  .editor{padding:14px}
+  .post{grid-template-columns:54px minmax(0,1fr)}
+  .post .ctl{grid-column:1 / -1;justify-content:flex-start}
+  .post .metrics{grid-column:1 / -1}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="shell">
+  <header class="bar">
+    <div class="brand"><span class="tally" id="tally" title="No post due today"></span><h1>Content Desk</h1></div>
+    <div class="clock mono" id="clock"></div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" data-tab="scripts" aria-selected="true">Scripts</button>
+      <button class="tab" role="tab" data-tab="timeline" aria-selected="false">Timeline</button>
+      <button class="tab" role="tab" data-tab="captions" aria-selected="false">Captions</button>
+    </nav>
+  </header>
+
+  <section class="strip" id="strip" aria-label="Status">
+    <div class="cell"><span class="label">Next post</span><strong>Loading</strong></div>
+    <div class="cell"><span class="label">Script pipeline</span><span class="sub">Loading</span></div>
+    <div class="cell"><span class="label">Next 7 days</span><span class="sub">Loading</span></div>
+  </section>
+
+  <p class="note" id="note" role="status" hidden></p>
+
+  <!-- SCRIPTS -->
+  <section class="panel" id="p-scripts">
+    <div class="split">
+      <aside>
+        <div class="list-head"><h2>Scripts</h2><button class="btn primary sm" id="newScript">New script</button></div>
+        <div class="filters" id="filters"></div>
+        <ul class="plain" id="scriptList"><li class="muted">Loading scripts…</li></ul>
+      </aside>
+      <section class="editor" id="editor">
+        <div class="empty" id="edEmpty">
+          <h3>Pick a script or start one</h3>
+          <p>Each script holds a 60-second outline with timecodes, your brief, and a read-aloud timer so you know it fits before you film.</p>
+          <button class="btn primary" data-act="new-script">New script</button>
+        </div>
+        <div id="edBody" hidden>
+          <div class="ed-top">
+            <input id="sTitle" class="title-in" aria-label="Script title" placeholder="Script title" maxlength="120">
+            <span class="save" id="saveState" role="status"></span>
+          </div>
+          <div class="row">
+            <label>Type
+              <select id="sKind"><option>Tutorial</option><option>Review</option><option>Comparison</option><option>Other</option></select>
+            </label>
+            <label>Stage
+              <select id="sStage"><option>Idea</option><option>Drafted</option><option>Filmed</option><option>Edited</option><option>Posted</option></select>
+            </label>
+            <label>Your pace (words per minute)
+              <input id="sPace" type="number" min="80" max="260" step="5" value="140">
+            </label>
+          </div>
+          <label class="block">Brief and key points
+            <textarea id="sBrief" rows="3" placeholder="What is the video about? Facts, numbers or points that must appear."></textarea>
+          </label>
+          <div class="actions">
+            <button class="btn" id="btnSkeleton">Insert 60-second outline</button>
+            <button class="btn primary" id="btnDraft" hidden>Draft with Claude</button>
+          </div>
+          <div class="draft" id="draftBox" hidden>
+            <span class="label" id="draftLabel">Claude draft</span>
+            <pre id="draftText"></pre>
+            <div class="actions" style="margin-top:0">
+              <button class="btn primary sm" id="draftUse" disabled>Use this draft</button>
+              <button class="btn sm" id="draftStop">Stop</button>
+              <button class="btn sm" id="draftClose" hidden>Discard</button>
+            </div>
+          </div>
+          <div class="meter">
+            <div class="meter-bar" id="meterBar"><i id="meterFill" style="width:0"></i><b title="60 seconds"></b></div>
+            <div class="meter-text"><span class="mono" id="meterTime">00:00 of 01:00</span><span id="meterInfo">Add voiceover lines starting with VO: to time them.</span></div>
+          </div>
+          <label class="block">Script
+            <textarea id="sBody" rows="16" spellcheck="false" placeholder="[0-4s] Hook&#10;Visual: …&#10;VO: …"></textarea>
+          </label>
+          <div class="actions foot">
+            <button class="btn" id="btnCopy">Copy script</button>
+            <button class="btn danger" id="btnDelete">Delete script</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <!-- TIMELINE -->
+  <section class="panel" id="p-timeline" hidden>
+    <div class="daystrip" id="dayStrip" aria-label="Next 14 days"></div>
+    <div class="tl-grid">
+      <form class="form" id="postForm" autocomplete="off">
+        <h2 id="formTitle">Plan a post</h2>
+        <label>Script
+          <select id="pScript"><option value="">No script linked</option></select>
+        </label>
+        <label>Post title
+          <input id="pTitle" maxlength="120" placeholder="e.g. Nanlite Pico review">
+        </label>
+        <div class="two">
+          <label>Date<input id="pDate" type="date" required></label>
+          <label>Time<input id="pTime" type="time" value="20:00" required></label>
+        </div>
+        <div>
+          <span class="label">Best windows</span>
+          <div class="slots" id="slots" style="margin-top:6px">
+            <button type="button" class="chip" data-time="20:00" title="7:30-9:30 PM, after work and school">8:00 PM</button>
+            <button type="button" class="chip" data-time="13:00" title="12:30-2:00 PM, lunch break">1:00 PM</button>
+            <button type="button" class="chip" data-time="11:00" title="Weekend 10 AM-12 PM">11:00 AM</button>
+          </div>
+        </div>
+        <div class="actions" style="margin-top:2px">
+          <button class="btn primary" type="submit" id="postSave">Add to timeline</button>
+          <button class="btn" type="button" id="btnSuggest">Suggest next slot</button>
+          <button class="btn" type="button" id="postCancel" hidden>Cancel</button>
+        </div>
+      </form>
+      <div id="postLists"><p class="muted">Loading timeline…</p></div>
+    </div>
+  </section>
+
+  <!-- CAPTIONS -->
+  <section class="panel" id="p-captions" hidden>
+    <div class="split cap">
+      <form class="form" id="capForm">
+        <h2>Caption builder</h2>
+        <label>From a script
+          <select id="cScript"><option value="">Custom topic</option></select>
+        </label>
+        <label>Topic or hook
+          <input id="cTopic" maxlength="140" placeholder="e.g. Gimbal නැතුව smooth footage!">
+        </label>
+        <div>
+          <span class="label">Language</span>
+          <div class="seg" id="cLang" style="margin-top:6px"><button type="button" data-v="mix" aria-pressed="true">Sinhala + English</button><button type="button" data-v="en" aria-pressed="false">English</button></div>
+        </div>
+        <div>
+          <span class="label">Ending</span>
+          <div class="seg" id="cCta" style="margin-top:6px"><button type="button" data-v="question" aria-pressed="true">Question</button><button type="button" data-v="follow" aria-pressed="false">Follow</button><button type="button" data-v="save" aria-pressed="false">Save</button><button type="button" data-v="none" aria-pressed="false">None</button></div>
+        </div>
+        <div>
+          <span class="label">Hashtags</span>
+          <div class="cap-opts" id="tagBox" style="margin-top:6px"></div>
+          <div class="two" style="grid-template-columns:1fr auto;margin-top:8px"><input id="tagNew" placeholder="Add your own" maxlength="30" aria-label="Add a hashtag"><button type="button" class="btn" id="tagAdd">Add</button></div>
+        </div>
+        <div class="actions">
+          <button class="btn primary" type="button" id="capBuild">Build caption</button>
+          <button class="btn" type="button" id="capAsk" hidden>Ask Claude for 3 options</button>
+        </div>
+      </form>
+      <div>
+        <div class="out">
+          <label>Caption
+            <textarea id="capOut" rows="7" placeholder="Build a caption or ask Claude for options. You can edit it here."></textarea>
+          </label>
+          <div class="counts"><span class="mono" id="capCount">0 characters · 0 hashtags</span><span id="capMsg" role="status"></span></div>
+          <div class="actions">
+            <button class="btn" id="capCopy" type="button">Copy</button>
+            <button class="btn" id="capSave" type="button">Save to library</button>
+          </div>
+        </div>
+        <div class="variants" id="variants" hidden></div>
+        <div class="lib" style="margin-top:28px">
+          <h2 style="font-size:18px;margin-bottom:6px">Saved captions</h2>
+          <div id="capLib"><p class="muted">Loading captions…</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+<div id="toast" role="status" hidden></div>
+<script>
+(() => {
+'use strict';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const STAGES = ['Idea','Drafted','Filmed','Edited','Posted'];
+const POST_STATES = ['Planned','Posted','Skipped'];
+const PRESET_TAGS = ['#SriLanka','#Sinhala','#Videography','#SonyCamera','#VideoEditing','#CameraGear','#Filmmaking','#ContentCreator','#DaVinciResolve'];
+const SECTIONS = {
+  Tutorial:['What it is','How to do it','Post production'],
+  Review:['First look','Real-world test','Verdict'],
+  Comparison:['Option 1','Option 2','Option 3'],
+  Other:['Point 1','Point 2','Point 3']
+};
+const WINDOWS = [[0,4],[4,20],[20,38],[38,54],[54,60]];
+const WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+const ls = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+
+const S = {
+  tab:'scripts', scripts:[], posts:[], captions:[],
+  loaded:{scripts:false, posts:false, captions:false},
+  db:null, sample:null, sel:null, filter:'All', editPost:null, pickDay:null,
+  tags:new Set(((x) => Array.isArray(x) ? x : ['#SriLanka','#Sinhala','#Videography'])(ls.get('cd.tags', null))),
+  custom:((x) => Array.isArray(x) ? x : [])(ls.get('cd.custom', [])), lang:'mix', cta:'question', noteKind:'', lateSig:''
+};
+
+/* ---------- time (Asia/Colombo) ---------- */
+function nowCo(){
+  const parts = new Intl.DateTimeFormat('en-GB', {timeZone:'Asia/Colombo', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:false}).formatToParts(new Date());
+  const g = t => parts.find(x => x.type === t).value;
+  const h = g('hour') === '24' ? '00' : g('hour');
+  return {date:`${g('year')}-${g('month')}-${g('day')}`, time:`${h}:${g('minute')}`};
+}
+const parseD = iso => { const [y,m,d] = iso.split('-').map(Number); return new Date(Date.UTC(y, m-1, d)); };
+const isoD = dt => dt.toISOString().slice(0,10);
+const addDays = (i, n) => { const d = parseD(i); d.setUTCDate(d.getUTCDate() + n); return isoD(d); };
+const wdOf = i => WD[parseD(i).getUTCDay()];
+const dnOf = i => parseD(i).getUTCDate();
+const moOf = i => MO[parseD(i).getUTCMonth()];
+const msOf = (d, t) => { const [y,m,da] = d.split('-').map(Number); const [h,mi] = (t || '20:00').split(':').map(Number); return Date.UTC(y, m-1, da, h, mi); };
+const fmtTime = t => { const [h, m] = (t || '20:00').split(':').map(Number); return `${h % 12 || 12}:${String(m).padStart(2,'0')} ${h >= 12 ? 'PM' : 'AM'}`; };
+const fmtHour = h => `${h % 12 || 12} ${h >= 12 ? 'PM' : 'AM'}`;
+const keyOf = p => `${p.date} ${p.time || '20:00'}`;
+const byKey = (a, b) => keyOf(a) < keyOf(b) ? -1 : keyOf(a) > keyOf(b) ? 1 : 0;
+const mmss = s => `${String(Math.floor(s / 60)).padStart(2,'0')}:${String(Math.round(s % 60)).padStart(2,'0')}`;
+function dayLabel(d){
+  const n = nowCo().date;
+  if (d === n) return 'Today';
+  if (d === addDays(n, 1)) return 'Tomorrow';
+  return `${wdOf(d)} ${dnOf(d)} ${moOf(d)}`;
+}
+function until(p){
+  const n = nowCo();
+  const m = Math.round((msOf(p.date, p.time) - msOf(n.date, n.time)) / 60000);
+  if (m < 1) return 'now';
+  if (m < 60) return `in ${m} min`;
+  if (m < 1440) return `in ${Math.floor(m / 60)} h ${m % 60} min`;
+  return `in ${Math.floor(m / 1440)} d`;
+}
+
+/* ---------- small helpers ---------- */
+let toastT;
+function toast(m){ const el = $('#toast'); el.textContent = m; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 3200); }
+function showNote(kind, msg){ S.noteKind = kind; const n = $('#note'); n.textContent = msg; n.hidden = false; }
+function hideNote(kind){ if (S.noteKind === kind) { $('#note').hidden = true; S.noteKind = ''; } }
+function fail(e){
+  const c = e && e.code;
+  toast(c === 'invalid_argument' ? "This view can't save changes. Ask the owner for edit access."
+      : c === 'quota_exceeded' ? 'Storage is full. Delete some items and try again.'
+      : 'Could not save. Check your connection and try again.');
+}
+const chains = new Map();
+function queue(key, fn){ const prev = chains.get(key) || Promise.resolve(); const next = prev.then(fn, fn); chains.set(key, next); return next; }
+function twoStep(btn, armed, fn){
+  if (btn.dataset.armed) { clearTimeout(btn._t); delete btn.dataset.armed; btn.textContent = btn.dataset.label; fn(); return; }
+  btn.dataset.label = btn.textContent; btn.dataset.armed = '1'; btn.textContent = armed;
+  btn._t = setTimeout(() => { delete btn.dataset.armed; btn.textContent = btn.dataset.label; }, 3500);
+}
+async function copyText(text, src){
+  try { await navigator.clipboard.writeText(text); toast('Copied'); return; } catch (e) {}
+  try {
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+    document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove();
+    if (ok) { toast('Copied'); return; }
+  } catch (e) {}
+  if (src) { src.focus(); if (src.select) src.select(); }
+  toast('Press Ctrl+C or Cmd+C to copy');
+}
+function aiErrorCopy(code){
+  return code === 'rate_limited' ? 'Too many requests. Wait a moment and try again.'
+       : code === 'invalid_json' ? 'Claude replied in the wrong format. Try again.'
+       : code === 'session_expired' ? 'Sign in again to use Claude here.'
+       : 'Claude could not answer. Try again.';
+}
+function hideAiIfBlocked(code){
+  if (['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(code)) {
+    S.sample = null; $('#btnDraft').hidden = true; $('#capAsk').hidden = true; return true;
+  }
+  return false;
+}
+
+/* ---------- script text helpers ---------- */
+function voText(body){
+  const lines = String(body || '').split('\n');
+  const vo = lines.filter(l => /^\s*(?:VO|Voiceover)\s*:/i.test(l)).map(l => l.replace(/^\s*[^:]*:/, ''));
+  if (vo.length) return vo.join(' ');
+  return lines.filter(l => l.trim() && !/^\s*(?:Visual|\[|#|\*\*|-{2,})/i.test(l)).join(' ');
+}
+const countWords = t => String(t).replace(/[*#_`]/g, ' ').trim().split(/\s+/).filter(Boolean).length;
+const firstVO = body => { const m = String(body || '').match(/^\s*(?:VO|Voiceover)\s*:\s*(.+)$/im); return m ? m[1].trim() : ''; };
+const stageOf = s => STAGES.includes(s.status) ? s.status : 'Idea';
+function skeleton(kind){
+  const names = ['Hook', ...(SECTIONS[kind] || SECTIONS.Other), 'CTA'];
+  return names.map((n, i) => {
+    const [a, b] = WINDOWS[i];
+    const vis = i === 0 ? 'Strongest shot first (before/after, close-up)' : i === names.length - 1 ? 'Face to camera' : '';
+    return `[${a}-${b}s] ${n}\nVisual: ${vis}\nVO: `;
+  }).join('\n\n');
+}
+
+/* ---------- status strip ---------- */
+function renderStrip(){
+  const n = nowCo(), nowKey = `${n.date} ${n.time}`;
+  const planned = S.posts.filter(p => p.status === 'Planned').sort(byKey);
+  const next = planned.find(p => keyOf(p) >= nowKey);
+  const dueToday = planned.some(p => p.date === n.date && keyOf(p) >= nowKey);
+  const tally = $('#tally'); tally.classList.toggle('on', dueToday); tally.title = dueToday ? 'A post is due today' : 'No post due today';
+
+  let c1;
+  if (!S.loaded.posts) c1 = '<strong>Loading</strong>';
+  else if (next) c1 = `<strong>${esc(next.title)}</strong><span class="sub">${dayLabel(next.date)}, ${fmtTime(next.time)} · ${until(next)}</span>`;
+  else c1 = '<strong>Nothing scheduled</strong><span class="sub"><button class="btn sm" data-act="goto-timeline">Plan a post</button></span>';
+
+  const counts = Object.fromEntries(STAGES.map(s => [s, 0]));
+  S.scripts.forEach(s => { counts[stageOf(s)]++; });
+  const total = S.scripts.length;
+  let c2;
+  if (!S.loaded.scripts) c2 = '<span class="sub">Loading</span>';
+  else if (!total) c2 = '<strong>No scripts yet</strong><span class="sub">Start one in Scripts.</span>';
+  else c2 = `<div class="pipe" role="img" aria-label="Scripts by stage">${STAGES.map(s => counts[s] ? `<i class="s-${s}" style="flex:${counts[s]}"></i>` : '').join('')}</div>
+    <div class="legend">${STAGES.map(s => `<span>${s} <b>${counts[s]}</b></span>`).join('')}</div>`;
+
+  const end = addDays(n.date, 6);
+  const week = S.posts.filter(p => p.status !== 'Skipped' && p.date >= n.date && p.date <= end).length;
+  const c3 = S.loaded.posts ? `<strong>${week} <span class="sub" style="font-weight:400;font-family:var(--font-body)">${week === 1 ? 'post' : 'posts'} · target 3-4 a week</span></strong>` : '<span class="sub">Loading</span>';
+
+  $('#strip').innerHTML = `<div class="cell"><span class="label">Next post</span>${c1}</div>
+    <div class="cell"><span class="label">Script pipeline</span>${c2}</div>
+    <div class="cell"><span class="label">Next 7 days</span>${c3}</div>`;
+}
+function tick(){
+  const n = nowCo();
+  $('#clock').textContent = `${wdOf(n.date)} ${dnOf(n.date)} ${moOf(n.date)} · ${fmtTime(n.time)} · Colombo`;
+  renderStrip();
+  const sig = S.posts.filter(p => p.status === 'Planned' && keyOf(p) < `${n.date} ${n.time}`).map(p => p.id).join();
+  if (S.loaded.posts && sig !== S.lateSig) renderPosts();
+}
+
+/* ---------- scripts: list ---------- */
+function renderFilters(){
+  const counts = Object.fromEntries(STAGES.map(s => [s, S.scripts.filter(x => stageOf(x) === s).length]));
+  $('#filters').innerHTML = ['All', ...STAGES].map(f =>
+    `<button class="chip" data-filter="${f}" aria-pressed="${S.filter === f}">${f}${f === 'All' ? '' : ' ' + counts[f]}</button>`).join('');
+}
+function renderScriptList(){
+  const ul = $('#scriptList');
+  if (!S.loaded.scripts) { ul.innerHTML = '<li class="muted">Loading scripts…</li>'; return; }
+  const rows = S.scripts.filter(s => S.filter === 'All' || stageOf(s) === S.filter).sort((a, b) => (b.updated || 0) - (a.updated || 0));
+  if (!rows.length) {
+    ul.innerHTML = `<li class="muted" style="padding:12px 0">${S.scripts.length ? 'No scripts in this stage.' : 'No scripts yet. New script starts a 60-second outline.'}</li>`;
+    return;
+  }
+  ul.innerHTML = rows.map(s => {
+    const sec = countWords(voText(s.body)) / ((Number($('#sPace').value) || 140) / 60);
+    const hook = firstVO(s.body) || s.brief || 'No script yet';
+    return `<li><button class="srow" data-id="${esc(s.id)}" aria-current="${S.sel === s.id}">
+      <span class="t"><strong>${esc(s.title || 'Untitled script')}</strong></span>
+      <span class="hook">${esc(hook)}</span>
+      <span class="meta"><span class="pill p-${stageOf(s)}">${stageOf(s)}</span><span>${esc(s.kind || '')}</span>${s.body ? `<span class="mono">~${Math.round(sec)} s</span>` : ''}</span>
+    </button></li>`;
+  }).join('');
+}
+
+/* ---------- scripts: editor ---------- */
+const ed = {loaded:0, dirty:false, timer:null, draftCtl:null};
+const cur = () => S.scripts.find(s => s.id === S.sel);
+function saveState(t){ $('#saveState').textContent = t; }
+function updateMeter(){
+  const words = countWords(voText($('#sBody').value));
+  const pace = Number($('#sPace').value) || 140;
+  const sec = words / (pace / 60);
+  const bar = $('#meterBar');
+  $('#meterFill').style.width = Math.min(100, sec / 75 * 100) + '%';
+  bar.classList.toggle('warn', sec > 62);
+  bar.classList.toggle('good', sec >= 45 && sec <= 62);
+  $('#meterTime').textContent = `${mmss(sec)} of 01:00`;
+  $('#meterInfo').textContent = !words ? 'Add voiceover lines starting with VO: to time them.'
+    : sec > 62 ? `${words} words at ${pace} wpm. Over by about ${Math.round(sec - 60)} s, trim a line.`
+    : sec < 45 ? `${words} words at ${pace} wpm. Room for about ${Math.round((60 - sec) / 60 * pace)} more words.`
+    : `${words} words at ${pace} wpm. Fits in a minute.`;
+}
+function fillEditor(s){
+  $('#sTitle').value = s.title || '';
+  $('#sKind').value = ['Tutorial','Review','Comparison','Other'].includes(s.kind) ? s.kind : 'Other';
+  $('#sStage').value = stageOf(s);
+  $('#sBrief').value = s.brief || '';
+  $('#sBody').value = s.body || '';
+  ed.loaded = s.updated || 0; ed.dirty = false; saveState(''); updateMeter();
+}
+function showEditor(){
+  const s = cur();
+  $('#edEmpty').hidden = !!s; $('#edBody').hidden = !s;
+  if (s) fillEditor(s);
+}
+function syncEditor(){
+  const s = cur();
+  if (S.sel && !s) { S.sel = null; closeDraft(); showEditor(); return; }
+  if (s && !ed.dirty && (s.updated || 0) !== ed.loaded && !$('#edBody').contains(document.activeElement)) fillEditor(s);
+}
+async function selectScript(id){
+  await saveNow();
+  S.sel = id; closeDraft(); showEditor(); renderScriptList();
+  if (matchMedia('(max-width:820px)').matches) $('#editor').scrollIntoView({block:'start'});
+}
+function onEdit(){
+  if (!S.sel) return;
+  ed.dirty = true; saveState('Unsaved'); updateMeter();
+  clearTimeout(ed.timer); ed.timer = setTimeout(saveNow, 800);
+}
+function saveNow(){
+  clearTimeout(ed.timer);
+  if (!S.sel || !ed.dirty || !S.db) return Promise.resolve();
+  const id = S.sel, ts = Date.now();
+  const data = {
+    title:$('#sTitle').value.trim() || 'Untitled script', kind:$('#sKind').value, status:$('#sStage').value,
+    brief:$('#sBrief').value, body:$('#sBody').value, updated:ts
+  };
+  ed.dirty = false; ed.loaded = ts; saveState('Saving…');
+  return queue('scripts/' + id, async () => {
+    try {
+      await S.db.doc('scripts/' + id).update(data);
+      if (S.sel === id && !ed.dirty) saveState('Saved');
+    } catch (e) {
+      if (S.sel === id) { ed.dirty = true; saveState('Not saved'); }
+      fail(e);
+    }
+  });
+}
+async function newScript(){
+  if (!S.db) { toast('Saved data is not available in this view'); return; }
+  await saveNow();
+  const ref = S.db.collection('scripts').doc(), now = Date.now();
+  const data = {title:'Untitled script', kind:'Tutorial', status:'Idea', brief:'', body:'', created:now, updated:now};
+  try { await ref.set(data); } catch (e) { fail(e); return; }
+  if (!S.scripts.some(s => s.id === ref.id)) S.scripts = [{id:ref.id, ...data}, ...S.scripts];
+  S.sel = ref.id; closeDraft(); showEditor(); renderScriptList(); renderStrip();
+  $('#sTitle').focus(); $('#sTitle').select();
+  if (matchMedia('(max-width:820px)').matches) $('#editor').scrollIntoView({block:'start'});
+}
+
+/* ---------- Claude draft ---------- */
+function draftPrompt(){
+  const kind = $('#sKind').value, title = $('#sTitle').value.trim() || 'Untitled', brief = $('#sBrief').value.trim(), body = $('#sBody').value.trim();
+  const pace = Number($('#sPace').value) || 140;
+  const names = ['Hook', ...(SECTIONS[kind] || SECTIONS.Other), 'CTA'];
+  const blocks = names.map((n, i) => `[${WINDOWS[i][0]}-${WINDOWS[i][1]}s] ${n}`).join('\n');
+  return `You write TikTok scripts for a Sri Lankan videographer who makes camera-gear tutorials and reviews.
+
+Write a 60-second script in casual, punchy spoken Sinhala (written in Sinhala script) mixed with English technical words, the way Sri Lankan creators actually talk. Use short sentences and a hook that stops the scroll in the first 4 seconds.
+
+Rules:
+- Never invent specs, prices, battery times or measurements. Where a fact is needed and was not given, write a bracketed placeholder such as [battery time from my test].
+- The spoken lines together should run about ${pace} words, which is 60 seconds at this creator's pace.
+- Use exactly these time blocks, in this order:
+${blocks}
+- Under each block header write one line starting with "Visual:" (English, what to film) and one line starting with "VO:" (the spoken line).
+- Reply with only the script, no commentary.
+
+Topic: ${title}
+Type: ${kind}
+Key points from the creator: ${brief || 'none given'}${body ? `\n\nCurrent draft to improve, keeping any facts in it:\n${body.slice(0, 6000)}` : ''}`;
+}
+function closeDraft(){ if (ed.draftCtl) ed.draftCtl.abort(); $('#draftBox').hidden = true; $('#draftText').textContent = ''; }
+async function runDraft(){
+  if (!S.sample || ed.draftCtl) return;
+  const ctl = new AbortController(); ed.draftCtl = ctl;
+  $('#draftBox').hidden = false; $('#draftText').textContent = 'Thinking…'; $('#draftLabel').textContent = 'Claude draft';
+  $('#draftUse').disabled = true; $('#draftClose').hidden = true; $('#draftStop').hidden = false; $('#btnDraft').disabled = true;
+  const done = label => { $('#draftLabel').textContent = label; $('#draftStop').hidden = true; $('#draftClose').hidden = false; };
+  try {
+    const r = await S.sample(draftPrompt(), {signal:ctl.signal, cache:false, onText:({text}) => { $('#draftText').textContent = text; }});
+    $('#draftText').textContent = r.text; $('#draftUse').disabled = false;
+    done(r.truncated ? 'Claude draft (cut short, ask for less or edit it)' : 'Claude draft');
+  } catch (e) {
+    if (e.code === 'cancelled') { if (e.text) { $('#draftUse').disabled = false; done('Stopped'); } else { $('#draftBox').hidden = true; } }
+    else {
+      if (e.text) { $('#draftText').textContent = e.text; $('#draftUse').disabled = false; }
+      else $('#draftText').textContent = '';
+      done(aiErrorCopy(e.code)); hideAiIfBlocked(e.code);
+    }
+  } finally { ed.draftCtl = null; $('#btnDraft').disabled = false; }
+}
+
+/* ---------- timeline ---------- */
+function renderDayStrip(){
+  const t = nowCo().date;
+  let html = '';
+  for (let i = 0; i < 14; i++) {
+    const d = addDays(t, i);
+    const posts = S.posts.filter(p => p.date === d).sort(byKey);
+    html += `<button type="button" class="day${i === 0 ? ' today' : ''}${S.pickDay === d ? ' sel' : ''}" data-date="${d}" aria-label="${wdOf(d)} ${dnOf(d)} ${moOf(d)}">
+      <span class="wd">${i === 0 ? 'Today' : wdOf(d)}</span>
+      <span class="dn">${dnOf(d)} <small class="muted" style="font-size:12px;font-weight:400;font-family:var(--font-body)">${moOf(d)}</small></span>
+      ${posts.map(p => `<span class="tag p-${POST_STATES.includes(p.status) ? p.status : 'Planned'}">${fmtTime(p.time)}</span>`).join('')}
+    </button>`;
+  }
+  $('#dayStrip').innerHTML = html;
+}
+function postRow(p, late){
+  const sc = S.scripts.find(s => s.id === p.scriptId);
+  const st = POST_STATES.includes(p.status) ? p.status : 'Planned';
+  return `<li class="post" data-id="${esc(p.id)}">
+    <div class="when"><b>${dnOf(p.date)}</b><span>${wdOf(p.date)} ${moOf(p.date)}</span></div>
+    <div class="what"><strong>${esc(p.title)}</strong><small>${fmtTime(p.time)}${sc ? ' · ' + esc(sc.title) : ''}${late ? ' · <span class="pill p-late">Past due</span>' : ''}</small></div>
+    <div class="ctl">
+      <select data-act="state" aria-label="Status of ${esc(p.title)}">${POST_STATES.map(o => `<option${o === st ? ' selected' : ''}>${o}</option>`).join('')}</select>
+      <button class="btn sm" data-act="edit">Edit</button>
+      <button class="btn sm danger" data-act="del">Delete</button>
+    </div>
+    ${st === 'Posted' ? `<div class="metrics">
+      <label>Views after 1 h <input type="number" min="0" data-field="views1h" value="${Number.isFinite(p.views1h) ? p.views1h : ''}"></label>
+      <label>Avg watch (s) <input type="number" min="0" step="0.1" data-field="avgWatch" value="${Number.isFinite(p.avgWatch) ? p.avgWatch : ''}"></label>
+    </div>` : ''}
+  </li>`;
+}
+function insightsHtml(){
+  const pts = S.posts.filter(p => p.status === 'Posted' && Number.isFinite(p.views1h));
+  if (pts.length < 2) return `<div class="group"><h3>What worked</h3><p class="muted" style="margin:0;max-width:52ch">Record views after 1 hour on posted videos. After two, this shows which posting time brings the most early views.</p></div>`;
+  const by = {};
+  pts.forEach(p => { const h = Number((p.time || '20:00').split(':')[0]); const k = fmtHour(h); (by[k] = by[k] || {sum:0, n:0}); by[k].sum += p.views1h; by[k].n++; });
+  const rows = Object.entries(by).map(([k, v]) => ({k, avg:v.sum / v.n, n:v.n})).sort((a, b) => b.avg - a.avg).slice(0, 5);
+  const max = rows[0].avg || 1;
+  const watch = S.posts.filter(p => Number.isFinite(p.avgWatch) && p.status === 'Posted');
+  const aw = watch.length ? watch.reduce((a, p) => a + p.avgWatch, 0) / watch.length : null;
+  return `<div class="group"><h3>What worked <span>average views after 1 hour, by posting time</span></h3>
+    <div class="bars">${rows.map(r => `<div class="bar-row"><span class="mono">${r.k}</span><span class="track"><i style="width:${Math.max(3, r.avg / max * 100)}%"></i></span><span class="v mono">${Math.round(r.avg).toLocaleString()} · ${r.n} post${r.n > 1 ? 's' : ''}</span></div>`).join('')}</div>
+    ${aw != null ? `<p class="muted" style="margin:10px 0 0;font-size:13px">Average watch time across posted videos: ${aw.toFixed(1)} s</p>` : ''}</div>`;
+}
+function renderPosts(){
+  const box = $('#postLists');
+  if (!S.loaded.posts) { box.innerHTML = '<p class="muted">Loading timeline…</p>'; return; }
+  const n = nowCo(), nowKey = `${n.date} ${n.time}`;
+  const planned = S.posts.filter(p => p.status === 'Planned').sort(byKey);
+  const late = planned.filter(p => keyOf(p) < nowKey);
+  const up = planned.filter(p => keyOf(p) >= nowKey);
+  const done = S.posts.filter(p => p.status !== 'Planned').sort((a, b) => byKey(b, a));
+  S.lateSig = late.map(p => p.id).join();
+  const group = (title, hint, arr, isLate) => arr.length ? `<div class="group"><h3>${title} <span>${hint}</span></h3><ul class="plain">${arr.map(p => postRow(p, isLate)).join('')}</ul></div>` : '';
+  let html = group('Needs an update', 'Planned time has passed. Mark each as posted or skipped.', late, true)
+    + group('Upcoming', `${up.length} planned`, up, false)
+    + group('Done', 'posted and skipped', done, false);
+  if (!S.posts.length) html = `<div class="empty"><h3>Nothing planned yet</h3><p>Use Suggest next slot to pick a good time, then add your first post. Times follow the windows that work in Sri Lanka: weekday evenings, lunch hour, weekend mornings.</p></div>`;
+  box.innerHTML = html + insightsHtml();
+}
+function suggestSlot(){
+  const n = nowCo();
+  const taken = new Set(S.posts.filter(p => p.status !== 'Skipped').map(p => p.date));
+  for (const strict of [true, false]) {
+    for (let i = 0; i < 40; i++) {
+      const d = addDays(n.date, i), dow = parseD(d).getUTCDay();
+      const time = (dow === 0 || dow === 6) ? '11:00' : '20:00';
+      if (i === 0 && time <= n.time) continue;
+      if (taken.has(d)) continue;
+      if (strict && (taken.has(addDays(d, -1)) || taken.has(addDays(d, 1)))) continue;
+      return {date:d, time};
+    }
+  }
+  return {date:addDays(n.date, 1), time:'20:00'};
+}
+function resetPostForm(){
+  S.editPost = null; $('#postForm').reset(); $('#pTime').value = '20:00';
+  $('#formTitle').textContent = 'Plan a post'; $('#postSave').textContent = 'Add to timeline'; $('#postCancel').hidden = true;
+  $('#pDate').value = S.pickDay || nowCo().date;
+}
+function fillScriptSelects(){
+  const opts = S.scripts.slice().sort((a, b) => (b.updated || 0) - (a.updated || 0));
+  const mk = (sel, first) => { const v = sel.value; sel.innerHTML = `<option value="">${first}</option>` + opts.map(s => `<option value="${esc(s.id)}">${esc(s.title || 'Untitled script')}</option>`).join(''); sel.value = opts.some(s => s.id === v) ? v : ''; };
+  mk($('#pScript'), 'No script linked'); mk($('#cScript'), 'Custom topic');
+}
+async function submitPost(e){
+  e.preventDefault();
+  if (!S.db) { toast('Saved data is not available in this view'); return; }
+  const scriptId = $('#pScript').value, sc = S.scripts.find(s => s.id === scriptId);
+  const title = $('#pTitle').value.trim() || (sc && sc.title) || '';
+  const date = $('#pDate').value, time = $('#pTime').value || '20:00';
+  if (!title || !date) { toast('Add a title and a date'); return; }
+  try {
+    if (S.editPost) await queue('posts/' + S.editPost, () => S.db.doc('posts/' + S.editPost).update({title, date, time, scriptId}));
+    else await S.db.collection('posts').add({title, date, time, scriptId, status:'Planned', views1h:null, avgWatch:null, created:Date.now()});
+  } catch (err) { fail(err); return; }
+  toast(S.editPost ? 'Post updated' : 'Added to timeline');
+  resetPostForm();
+}
+async function postAction(e){
+  const li = e.target.closest('.post'); if (!li || !S.db) return;
+  const id = li.dataset.id, p = S.posts.find(x => x.id === id); if (!p) return;
+  const act = e.target.dataset.act;
+  if (e.type === 'click' && act === 'edit') {
+    S.editPost = id; $('#pScript').value = p.scriptId || ''; $('#pTitle').value = p.title || ''; $('#pDate').value = p.date; $('#pTime').value = p.time || '20:00';
+    $('#formTitle').textContent = 'Edit post'; $('#postSave').textContent = 'Save changes'; $('#postCancel').hidden = false;
+    if (matchMedia('(max-width:820px)').matches) $('#postForm').scrollIntoView({block:'start'});
+    $('#pTitle').focus();
+  } else if (e.type === 'click' && act === 'del') {
+    twoStep(e.target, 'Confirm delete', async () => { try { await S.db.doc('posts/' + id).delete(); toast('Post deleted'); } catch (err) { fail(err); } });
+  } else if (e.type === 'change' && act === 'state') {
+    const status = e.target.value;
+    try {
+      await queue('posts/' + id, () => S.db.doc('posts/' + id).update({status}));
+      const sc = S.scripts.find(s => s.id === p.scriptId);
+      if (status === 'Posted' && sc && stageOf(sc) !== 'Posted') {
+        await queue('scripts/' + sc.id, () => S.db.doc('scripts/' + sc.id).update({status:'Posted', updated:Date.now()}));
+        toast('Marked posted. Script moved to Posted.');
+      }
+    } catch (err) { fail(err); }
+  } else if (e.type === 'change' && e.target.dataset.field) {
+    const v = e.target.value === '' ? null : Number(e.target.value);
+    try { await queue('posts/' + id, () => S.db.doc('posts/' + id).update({[e.target.dataset.field]:v})); } catch (err) { fail(err); }
+  }
+}
+
+/* ---------- captions ---------- */
+const CTAS = {
+  mix:{question:'ඔයා මොකක්ද use කරන්නේ? Comment කරන්න! 👇', follow:'Follow කරන්න, තව tips එනවා! 🔥', save:'පස්සේ ඕන වෙයි, Save කරගන්න! 📌', none:''},
+  en:{question:'What do you use? Tell me below 👇', follow:'Follow for more tips 🔥', save:'Save this for your next shoot 📌', none:''}
+};
+const allTags = () => [...PRESET_TAGS, ...S.custom.filter(t => !PRESET_TAGS.includes(t))];
+const pickedTags = () => allTags().filter(t => S.tags.has(t));
+function renderTags(){
+  $('#tagBox').innerHTML = allTags().map(t => `<button type="button" class="chip tagc" data-tag="${esc(t)}" aria-pressed="${S.tags.has(t)}">${esc(t)}</button>`).join('');
+}
+function updateCapCount(){
+  const t = $('#capOut').value;
+  $('#capCount').textContent = `${[...t].length} characters · ${(t.match(/#[\p{L}\p{N}_]+/gu) || []).length} hashtags`;
+}
+function capTopic(){
+  const sc = S.scripts.find(s => s.id === $('#cScript').value);
+  return $('#cTopic').value.trim() || (sc && sc.title) || '';
+}
+function buildCaption(){
+  const topic = capTopic();
+  if (!topic) { toast('Add a topic first'); $('#cTopic').focus(); return; }
+  const cta = CTAS[S.lang][S.cta];
+  $('#capOut').value = [`${topic} 🎥🔥`, cta, '', pickedTags().join(' ')].filter((x, i) => x || i === 2).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  updateCapCount();
+}
+let capCtl = null;
+async function askCaptions(){
+  if (!S.sample || capCtl) return;
+  const topic = capTopic();
+  if (!topic) { toast('Add a topic first'); $('#cTopic').focus(); return; }
+  const sc = S.scripts.find(s => s.id === $('#cScript').value);
+  const tags = pickedTags().join(' ');
+  const endings = {question:'a question that invites comments', follow:'a nudge to follow for more tips', save:'a nudge to save the video for later', none:'no call to action'};
+  const prompt = `You write TikTok captions for a Sri Lankan videographer who posts camera-gear tutorials and reviews.
+
+Topic: ${topic}
+Language: ${S.lang === 'mix' ? 'casual spoken Sinhala (Sinhala script) mixed with English words, the way Sri Lankan creators write' : 'plain, friendly English'}
+Ending: ${endings[S.cta]}
+Hashtags to finish with, exactly these: ${tags || 'none'}${sc && sc.body ? `\nScript for context:\n${sc.body.slice(0, 1500)}` : ''}
+
+Write 3 different captions: 1) a curiosity hook, 2) a benefit-led line, 3) a question that invites comments. Each is 1-3 short lines, may use 1-2 emoji, never invents facts or numbers, and ends with the hashtags on their own line.
+Reply with only a JSON array of 3 strings.`;
+  const box = $('#variants'); box.hidden = false; box.innerHTML = '<p class="muted">Thinking…</p>';
+  const ctl = new AbortController(); capCtl = ctl; $('#capAsk').disabled = true;
+  try {
+    const arr = await S.sample.json(prompt, {signal:ctl.signal, cache:false});
+    const list = (Array.isArray(arr) ? arr : []).filter(x => typeof x === 'string' && x.trim()).slice(0, 3);
+    if (!list.length) throw {code:'invalid_json'};
+    box.innerHTML = list.map(t => `<div class="variant"><p>${esc(t)}</p><div class="actions" style="margin:0"><button class="btn sm primary" data-use>Use this</button><button class="btn sm" data-copy>Copy</button></div></div>`).join('');
+    $$('.variant', box).forEach((el, i) => {
+      el.querySelector('[data-use]').onclick = () => { $('#capOut').value = list[i]; updateCapCount(); $('#capOut').focus(); };
+      el.querySelector('[data-copy]').onclick = () => copyText(list[i]);
+    });
+  } catch (e) {
+    if (e.code === 'cancelled') box.hidden = true;
+    else { box.innerHTML = `<p class="muted">${esc(aiErrorCopy(e.code))}</p>`; hideAiIfBlocked(e.code); }
+  } finally { capCtl = null; $('#capAsk').disabled = false; }
+}
+function renderLib(){
+  const box = $('#capLib');
+  if (!S.loaded.captions) { box.innerHTML = '<p class="muted">Loading captions…</p>'; return; }
+  const rows = S.captions.slice().sort((a, b) => (b.created || 0) - (a.created || 0));
+  if (!rows.length) { box.innerHTML = '<p class="muted" style="max-width:48ch">Nothing saved yet. Build or edit a caption, then Save to library so it is ready when you post.</p>'; return; }
+  box.innerHTML = rows.map(c => `<div class="item" data-id="${esc(c.id)}"><p>${esc(c.text)}</p>
+    <div class="acts"><span>${esc(c.topic || '')}</span><button class="btn sm" data-lib="use">Edit</button><button class="btn sm" data-lib="copy">Copy</button><button class="btn sm danger" data-lib="del">Delete</button></div></div>`).join('');
+}
+
+/* ---------- wiring ---------- */
+function setTab(t){
+  if (!['scripts','timeline','captions'].includes(t)) t = 'scripts';
+  S.tab = t;
+  $$('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+  ['scripts','timeline','captions'].forEach(x => { $('#p-' + x).hidden = x !== t; });
+}
+function wire(){
+  $$('.tab').forEach(b => b.addEventListener('click', () => { location.hash = b.dataset.tab; setTab(b.dataset.tab); }));
+  window.addEventListener('hashchange', () => setTab(location.hash.slice(1)));
+  document.addEventListener('click', e => {
+    const a = e.target.closest('[data-act]'); if (!a) return;
+    if (a.dataset.act === 'new-script') newScript();
+    if (a.dataset.act === 'goto-timeline') { location.hash = 'timeline'; setTab('timeline'); $('#pTitle').focus(); }
+  });
+  $('#newScript').addEventListener('click', newScript);
+  $('#filters').addEventListener('click', e => { const b = e.target.closest('[data-filter]'); if (!b) return; S.filter = b.dataset.filter; renderFilters(); renderScriptList(); });
+  $('#scriptList').addEventListener('click', e => { const b = e.target.closest('.srow'); if (b) selectScript(b.dataset.id); });
+
+  ['sTitle','sBrief','sBody'].forEach(id => $('#' + id).addEventListener('input', onEdit));
+  ['sKind','sStage'].forEach(id => $('#' + id).addEventListener('change', () => { onEdit(); saveNow(); }));
+  $('#sTitle').addEventListener('blur', saveNow); $('#sBody').addEventListener('blur', saveNow); $('#sBrief').addEventListener('blur', saveNow);
+  $('#sPace').value = ls.get('cd.pace', 140);
+  $('#sPace').addEventListener('input', () => { ls.set('cd.pace', Number($('#sPace').value) || 140); updateMeter(); renderScriptList(); });
+  window.addEventListener('pagehide', saveNow);
+
+  $('#btnSkeleton').addEventListener('click', e => {
+    const put = () => { $('#sBody').value = skeleton($('#sKind').value); onEdit(); $('#sBody').focus(); };
+    if ($('#sBody').value.trim()) twoStep(e.currentTarget, 'Replace current script?', put); else put();
+  });
+  $('#btnDraft').addEventListener('click', runDraft);
+  $('#draftStop').addEventListener('click', () => { if (ed.draftCtl) ed.draftCtl.abort(); });
+  $('#draftUse').addEventListener('click', () => { $('#sBody').value = $('#draftText').textContent; closeDraft(); onEdit(); toast('Draft added to the script'); });
+  $('#draftClose').addEventListener('click', closeDraft);
+  $('#btnCopy').addEventListener('click', () => copyText($('#sBody').value, $('#sBody')));
+  $('#btnDelete').addEventListener('click', e => twoStep(e.currentTarget, 'Confirm delete', async () => {
+    const id = S.sel; if (!id || !S.db) return;
+    clearTimeout(ed.timer); ed.dirty = false;
+    try { await S.db.doc('scripts/' + id).delete(); } catch (err) { fail(err); return; }
+    S.scripts = S.scripts.filter(s => s.id !== id); S.sel = null; closeDraft(); showEditor(); renderScriptList(); renderFilters(); renderStrip(); toast('Script deleted');
+  }));
+
+  $('#dayStrip').addEventListener('click', e => {
+    const b = e.target.closest('.day'); if (!b) return;
+    S.pickDay = b.dataset.date; $('#pDate').value = S.pickDay; renderDayStrip(); $('#pTitle').focus();
+  });
+  $('#slots').addEventListener('click', e => { const b = e.target.closest('[data-time]'); if (b) $('#pTime').value = b.dataset.time; });
+  $('#btnSuggest').addEventListener('click', () => { const s = suggestSlot(); $('#pDate').value = s.date; $('#pTime').value = s.time; S.pickDay = s.date; renderDayStrip(); toast(`${dayLabel(s.date)} at ${fmtTime(s.time)}`); });
+  $('#pScript').addEventListener('change', () => { const sc = S.scripts.find(s => s.id === $('#pScript').value); if (sc && !$('#pTitle').value.trim()) $('#pTitle').value = sc.title || ''; });
+  $('#postForm').addEventListener('submit', submitPost);
+  $('#postCancel').addEventListener('click', resetPostForm);
+  $('#postLists').addEventListener('click', postAction);
+  $('#postLists').addEventListener('change', postAction);
+
+  const seg = (id, key) => $('#' + id).addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    S[key] = b.dataset.v; $$('button', $('#' + id)).forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  });
+  seg('cLang', 'lang'); seg('cCta', 'cta');
+  $('#tagBox').addEventListener('click', e => {
+    const b = e.target.closest('[data-tag]'); if (!b) return;
+    const t = b.dataset.tag; if (S.tags.has(t)) S.tags.delete(t); else S.tags.add(t);
+    ls.set('cd.tags', [...S.tags]); renderTags();
+  });
+  const addTag = () => {
+    const raw = $('#tagNew').value.replace(/[^\p{L}\p{N}_]/gu, ''); if (!raw) return;
+    const t = '#' + raw;
+    if (!allTags().includes(t)) { S.custom.push(t); ls.set('cd.custom', S.custom); }
+    S.tags.add(t); ls.set('cd.tags', [...S.tags]); $('#tagNew').value = ''; renderTags();
+  };
+  $('#tagAdd').addEventListener('click', addTag);
+  $('#tagNew').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } });
+  $('#cScript').addEventListener('change', () => { const sc = S.scripts.find(s => s.id === $('#cScript').value); if (sc) $('#cTopic').value = sc.title || ''; });
+  $('#capForm').addEventListener('submit', e => e.preventDefault());
+  $('#capBuild').addEventListener('click', buildCaption);
+  $('#capAsk').addEventListener('click', askCaptions);
+  $('#capOut').addEventListener('input', updateCapCount);
+  $('#capCopy').addEventListener('click', () => { if ($('#capOut').value.trim()) copyText($('#capOut').value, $('#capOut')); else toast('Nothing to copy yet'); });
+  $('#capSave').addEventListener('click', async () => {
+    const text = $('#capOut').value.trim();
+    if (!text) { toast('Nothing to save yet'); return; }
+    if (!S.db) { toast('Saved data is not available in this view'); return; }
+    try { await S.db.collection('captions').add({text, topic:capTopic(), created:Date.now()}); toast('Saved to library'); } catch (e) { fail(e); }
+  });
+  $('#capLib').addEventListener('click', e => {
+    const b = e.target.closest('[data-lib]'); if (!b) return;
+    const item = b.closest('.item'), c = S.captions.find(x => x.id === item.dataset.id); if (!c) return;
+    if (b.dataset.lib === 'copy') copyText(c.text);
+    if (b.dataset.lib === 'use') { $('#capOut').value = c.text; updateCapCount(); $('#capOut').focus(); }
+    if (b.dataset.lib === 'del') twoStep(b, 'Confirm delete', async () => { try { await S.db.doc('captions/' + c.id).delete(); } catch (err) { fail(err); } });
+  });
+}
+
+function onData(name){
+  renderStrip();
+  if (name === 'scripts') { renderFilters(); renderScriptList(); syncEditor(); fillScriptSelects(); renderPosts(); }
+  if (name === 'posts') { renderDayStrip(); renderPosts(); }
+  if (name === 'captions') renderLib();
+}
+function subscribe(name){
+  const t = setTimeout(() => { if (!S.loaded[name]) showNote('slow', 'Saved data cannot be reached yet. It may be out of date until it answers.'); }, 10000);
+  S.db.collection(name).onSnapshot(snap => {
+    clearTimeout(t);
+    S[name] = snap.docs.map(d => ({id:d.id, ...d.data()})).filter(d => name !== 'posts' || /^\d{4}-\d{2}-\d{2}$/.test(String(d.date)));
+    S.loaded[name] = true; hideNote('slow'); onData(name);
+  }, err => {
+    clearTimeout(t); S.loaded[name] = true;
+    showNote('err', err && err.code === 'revoked' ? 'Access to the saved data changed. Reload the page to continue.' : 'Saved data could not be read. Reload the page to try again.');
+    onData(name);
+  });
+}
+
+async function boot(){
+  wire(); tick(); setInterval(tick, 30000);
+  setTab(location.hash.slice(1) || 'scripts');
+  renderTags(); updateCapCount(); renderFilters(); renderDayStrip(); showEditor(); resetPostForm();
+  const c = window.claude;
+  const get = async n => { try { return (c && c.use) ? await c.use(n) : null; } catch (e) { return null; } };
+  const [db, sample] = await Promise.all([get('db'), get('sample')]);
+  S.db = db; S.sample = sample;
+  $('#btnDraft').hidden = !sample; $('#capAsk').hidden = !sample;
+  if (!db) {
+    showNote('nodb', 'Saved data is not available in this view, so nothing you add can be stored.');
+    ['scripts','posts','captions'].forEach(n => { S.loaded[n] = true; onData(n); });
+    return;
+  }
+  ['scripts','posts','captions'].forEach(subscribe);
+}
+boot();
+})();
+</script>
+
+</body></html>
