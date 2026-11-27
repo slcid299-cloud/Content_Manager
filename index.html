@@ -468,7 +468,8 @@ function hideAiIfBlocked(code){
 
 /* ---------- script text helpers ---------- */
 function voText(body){
-  const lines = String(body || '').split('\n');
+  const lines = String(body || '').split('
+');
   const vo = lines.filter(l => /^\s*(?:VO|Voiceover)\s*:/i.test(l)).map(l => l.replace(/^\s*[^:]*:/, ''));
   if (vo.length) return vo.join(' ');
   return lines.filter(l => l.trim() && !/^\s*(?:Visual|\[|#|\*\*|-{2,})/i.test(l)).join(' ');
@@ -481,8 +482,12 @@ function skeleton(kind){
   return names.map((n, i) => {
     const [a, b] = WINDOWS[i];
     const vis = i === 0 ? 'Strongest shot first (before/after, close-up)' : i === names.length - 1 ? 'Face to camera' : '';
-    return `[${a}-${b}s] ${n}\nVisual: ${vis}\nVO: `;
-  }).join('\n\n');
+    return `[${a}-${b}s] ${n}
+Visual: ${vis}
+VO: `;
+  }).join('
+
+');
 }
 
 /* ---------- status strip ---------- */
@@ -630,7 +635,8 @@ function draftPrompt(){
   const kind = $('#sKind').value, title = $('#sTitle').value.trim() || 'Untitled', brief = $('#sBrief').value.trim(), body = $('#sBody').value.trim();
   const pace = Number($('#sPace').value) || 140;
   const names = ['Hook', ...(SECTIONS[kind] || SECTIONS.Other), 'CTA'];
-  const blocks = names.map((n, i) => `[${WINDOWS[i][0]}-${WINDOWS[i][1]}s] ${n}`).join('\n');
+  const blocks = names.map((n, i) => `[${WINDOWS[i][0]}-${WINDOWS[i][1]}s] ${n}`).join('
+');
   return `You write TikTok scripts for a Sri Lankan videographer who makes camera-gear tutorials and reviews.
 
 Write a 60-second script in casual, punchy spoken Sinhala (written in Sinhala script) mixed with English technical words, the way Sri Lankan creators actually talk. Use short sentences and a hook that stops the scroll in the first 4 seconds.
@@ -645,7 +651,10 @@ ${blocks}
 
 Topic: ${title}
 Type: ${kind}
-Key points from the creator: ${brief || 'none given'}${body ? `\n\nCurrent draft to improve, keeping any facts in it:\n${body.slice(0, 6000)}` : ''}`;
+Key points from the creator: ${brief || 'none given'}${body ? `
+
+Current draft to improve, keeping any facts in it:
+${body.slice(0, 6000)}` : ''}`;
 }
 function closeDraft(){ if (ed.draftCtl) ed.draftCtl.abort(); $('#draftBox').hidden = true; $('#draftText').textContent = ''; }
 async function runDraft(){
@@ -817,7 +826,11 @@ function buildCaption(){
   const topic = capTopic();
   if (!topic) { toast('Add a topic first'); $('#cTopic').focus(); return; }
   const cta = CTAS[S.lang][S.cta];
-  $('#capOut').value = [`${topic} 🎥🔥`, cta, '', pickedTags().join(' ')].filter((x, i) => x || i === 2).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  $('#capOut').value = [`${topic} 🎥🔥`, cta, '', pickedTags().join(' ')].filter((x, i) => x || i === 2).join('
+').replace(/
+{3,}/g, '
+
+').trim();
   updateCapCount();
 }
 let capCtl = null;
@@ -833,7 +846,9 @@ async function askCaptions(){
 Topic: ${topic}
 Language: ${S.lang === 'mix' ? 'casual spoken Sinhala (Sinhala script) mixed with English words, the way Sri Lankan creators write' : 'plain, friendly English'}
 Ending: ${endings[S.cta]}
-Hashtags to finish with, exactly these: ${tags || 'none'}${sc && sc.body ? `\nScript for context:\n${sc.body.slice(0, 1500)}` : ''}
+Hashtags to finish with, exactly these: ${tags || 'none'}${sc && sc.body ? `
+Script for context:
+${sc.body.slice(0, 1500)}` : ''}
 
 Write 3 different captions: 1) a curiosity hook, 2) a benefit-led line, 3) a question that invites comments. Each is 1-3 short lines, may use 1-2 emoji, never invents facts or numbers, and ends with the hashtags on their own line.
 Reply with only a JSON array of 3 strings.`;
@@ -955,6 +970,57 @@ function wire(){
   });
 }
 
+function makeLocalDb(){
+  const read = col => ls.get('cd.db.' + col, []);
+  const write = (col, rows) => ls.set('cd.db.' + col, rows);
+  const subs = {};
+  const notify = col => {
+    const docs = read(col).map(r => ({id:r.id, data:() => ({...r})}));
+    (subs[col] || []).forEach(fn => fn({docs}));
+  };
+  return {
+    collection(col){
+      return {
+        onSnapshot(onNext){
+          (subs[col] = subs[col] || []).push(onNext);
+          notify(col);
+          return () => {};
+        },
+        doc(id){
+          const docId = id || ('id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7));
+          return {
+            id:docId,
+            async set(val){
+              const rows = read(col).filter(r => r.id !== docId);
+              rows.push({id:docId, ...val});
+              write(col, rows);
+              notify(col);
+            },
+            async update(patch){
+              const rows = read(col).map(r => r.id === docId ? {...r, ...patch} : r);
+              write(col, rows);
+              notify(col);
+            },
+            async delete(){
+              write(col, read(col).filter(r => r.id !== docId));
+              notify(col);
+            }
+          };
+        },
+        async add(val){
+          const ref = this.doc();
+          await ref.set(val);
+          return ref;
+        }
+      };
+    },
+    doc(path){
+      const [col, id] = path.split('/');
+      return this.collection(col).doc(id);
+    }
+  };
+}
+
 function onData(name){
   renderStrip();
   if (name === 'scripts') { renderFilters(); renderScriptList(); syncEditor(); fillScriptSelects(); renderPosts(); }
@@ -980,14 +1046,10 @@ async function boot(){
   renderTags(); updateCapCount(); renderFilters(); renderDayStrip(); showEditor(); resetPostForm();
   const c = window.claude;
   const get = async n => { try { return (c && c.use) ? await c.use(n) : null; } catch (e) { return null; } };
-  const [db, sample] = await Promise.all([get('db'), get('sample')]);
+  const [claudeDb, sample] = await Promise.all([get('db'), get('sample')]);
+  const db = claudeDb || makeLocalDb();
   S.db = db; S.sample = sample;
   $('#btnDraft').hidden = !sample; $('#capAsk').hidden = !sample;
-  if (!db) {
-    showNote('nodb', 'Saved data is not available in this view, so nothing you add can be stored.');
-    ['scripts','posts','captions'].forEach(n => { S.loaded[n] = true; onData(n); });
-    return;
-  }
   ['scripts','posts','captions'].forEach(subscribe);
 }
 boot();
